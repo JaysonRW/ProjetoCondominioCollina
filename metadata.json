@@ -1,0 +1,5 @@
+{
+  "name": "Portal do Condomínio Collina Belvedere",
+  "description": "Um portal web completo para o condomínio residencial Collina Belvedere, com sistema de comunicados e uma página de anunciantes/parceiros comerciais para monetização, utilizando Supabase como backend.",
+  "requestFramePermissions": []
+}
