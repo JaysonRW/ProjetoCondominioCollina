@@ -1,5 +1,5 @@
-// FIX: Changed React import to a namespace import to fix JSX typing errors.
-import * as React from 'react';
+// FIX: Corrected React import to fix JSX typing errors.
+import React from 'react';
 
 const Skeleton: React.FC<{ className?: string }> = ({ className }) => {
   return (
@@ -30,14 +30,14 @@ export const AnuncianteCardSkeleton: React.FC = () => (
 );
 
 export const ComunicadoCardSkeleton: React.FC = () => (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <Skeleton className="h-48 w-full" />
-        <div className="p-6 space-y-3">
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4">
+        <Skeleton className="h-4 w-1/4" />
+        <Skeleton className="h-5 w-3/4" />
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-5/6" />
         </div>
+        <Skeleton className="h-4 w-1/2" />
     </div>
 );
 

@@ -1,5 +1,5 @@
-// FIX: Changed React import to a namespace import and updated hook calls to fix JSX typing errors.
-import * as React from 'react';
+// FIX: Corrected React import to fix JSX typing errors and updated hook calls.
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -10,7 +10,7 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
-  React.useEffect(() => {
+  useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();

@@ -1,5 +1,5 @@
-// FIX: Changed React import to a namespace import and updated hook calls to fix JSX typing errors.
-import * as React from 'react';
+// FIX: Corrected React import to fix JSX typing errors and updated hook calls.
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { getAnunciantes, getCategorias, trackAnuncianteView, trackAnuncianteClick } from '../services/api';
 import { Anunciante, Categoria, Cupom } from '../types/types';
 import Modal from '../components/Modal';
@@ -49,14 +49,14 @@ const AnuncianteCard: React.FC<{ anunciante: Anunciante; onDetailsClick: (anunci
 
 
 const ParceirosPage: React.FC = () => {
-    const [anunciantes, setAnunciantes] = React.useState<Anunciante[]>([]);
-    const [categorias, setCategorias] = React.useState<Categoria[]>([]);
-    const [loading, setLoading] = React.useState(true);
-    const [searchTerm, setSearchTerm] = React.useState('');
-    const [selectedCategory, setSelectedCategory] = React.useState<string>('all');
-    const [selectedAnunciante, setSelectedAnunciante] = React.useState<Anunciante | null>(null);
+    const [anunciantes, setAnunciantes] = useState<Anunciante[]>([]);
+    const [categorias, setCategorias] = useState<Categoria[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [selectedAnunciante, setSelectedAnunciante] = useState<Anunciante | null>(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const loadData = async () => {
             setLoading(true);
             const [anunciantesData, categoriasData] = await Promise.all([getAnunciantes(), getCategorias()]);
@@ -67,7 +67,7 @@ const ParceirosPage: React.FC = () => {
         loadData();
     }, []);
 
-    const filteredAnunciantes = React.useMemo(() => {
+    const filteredAnunciantes = useMemo(() => {
         return anunciantes.filter(anunciante => {
             const matchesCategory = selectedCategory === 'all' || anunciante.categoria_id === selectedCategory;
             const matchesSearch = searchTerm === '' || anunciante.nome_empresa.toLowerCase().includes(searchTerm.toLowerCase());
@@ -75,12 +75,12 @@ const ParceirosPage: React.FC = () => {
         });
     }, [anunciantes, searchTerm, selectedCategory]);
     
-    const handleDetailsClick = React.useCallback((anunciante: Anunciante) => {
+    const handleDetailsClick = useCallback((anunciante: Anunciante) => {
         setSelectedAnunciante(anunciante);
         trackAnuncianteView(anunciante.id);
     }, []);
     
-    const handleActionClick = React.useCallback((id: string, url?: string) => {
+    const handleActionClick = useCallback((id: string, url?: string) => {
         trackAnuncianteClick(id);
         if (url) {
             window.open(url, '_blank');

@@ -1,109 +1,174 @@
-// FIX: Changed React import to a namespace import and updated hook calls to fix JSX typing errors.
-import * as React from 'react';
-import { getComunicados, getAnunciantesDestaque } from '../services/api';
-import { Anunciante, Comunicado } from '../types/types';
-import { ArrowRight, ExternalLink } from 'lucide-react';
+// FIX: Corrected React import to fix JSX typing errors and updated hook calls.
+import React, { useState, useEffect } from 'react';
+import { getComunicados } from '../services/api';
+import { Comunicado } from '../types/types';
+import { ArrowRight, ExternalLink, MessageSquare, FileText, ImageIcon, CalendarDays, Send, Calendar as CalendarIcon } from 'lucide-react';
 import { ComunicadoCardSkeleton } from '../components/Skeleton';
 
 const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCurrentPage }) => {
-  const [comunicados, setComunicados] = React.useState<Comunicado[]>([]);
-  const [anunciantes, setAnunciantes] = React.useState<Anunciante[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [contactForm, setContactForm] = useState({
+    nome: '',
+    bloco: '',
+    apartamento: '',
+    mensagem: ''
+  });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [comunicadosData, anunciantesData] = await Promise.all([
-        getComunicados(3),
-        getAnunciantesDestaque(4),
-      ]);
+      const comunicadosData = await getComunicados(3);
       setComunicados(comunicadosData);
-      setAnunciantes(anunciantesData);
       setLoading(false);
     };
     fetchData();
   }, []);
 
-  const getCategoriaBadgeStyle = (categoria: string) => {
-    switch (categoria) {
-      case 'urgente':
-        return 'bg-red-100 text-red-800';
-      case 'evento':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-blue-100 text-blue-800';
-    }
-  };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setContactForm(prev => ({...prev, [name]: value}));
+  }
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const { nome, bloco, apartamento, mensagem } = contactForm;
+    const fullMessage = `Olá, sou ${nome} do Bloco ${bloco}, Apto ${apartamento}.\n\nMensagem: ${mensagem}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=SEU_NUMERO_AQUI&text=${encodeURIComponent(fullMessage)}`;
+    window.open(whatsappUrl, '_blank');
+  }
+
+  const exploreItems = [
+    { title: 'Comunicados', description: 'Fique por dentro das novidades e informações importantes.', icon: MessageSquare, color: 'blue', page: 'comunicados' },
+    { title: 'Documentos', description: 'Acesse atas, relatórios e regulamentos.', icon: FileText, color: 'green', page: 'documentos' },
+    { title: 'Galeria', description: 'Veja fotos das instalações e eventos.', icon: ImageIcon, color: 'purple', page: 'galeria' },
+    { title: 'Eventos', description: 'Calendário de eventos e assembleias.', icon: CalendarDays, color: 'yellow', page: 'eventos' }
+  ];
+  
+  const exploreColors = {
+    blue: 'bg-blue-50 text-blue-600',
+    green: 'bg-green-50 text-green-600',
+    purple: 'bg-purple-50 text-purple-600',
+    yellow: 'bg-yellow-50 text-yellow-600',
+  }
 
   return (
     <div className="bg-gray-50">
       {/* Hero Section */}
-      <section className="relative text-white text-center py-24 md:py-40 bg-cover bg-center" style={{ backgroundImage: `url('/assets/hero-background.png')` }}>
-        <div className="absolute inset-0 bg-brandGreen-dark opacity-60"></div>
-        <div className="relative max-w-4xl mx-auto px-4">
-          <h1 className="text-4xl md:text-6xl font-display font-bold mb-4">Portal de Transparência</h1>
-          <p className="text-lg md:text-xl mb-8">Bem-vindo ao portal oficial do condominio Collina Belvedere</p>
-          <button onClick={() => setCurrentPage('comunicados')} className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all transform hover:scale-105 inline-flex items-center gap-2">
-            Ver Comunicados <ExternalLink size={20} />
-          </button>
+      <section className="relative text-white text-left py-24 md:py-40 bg-cover bg-center" style={{ backgroundImage: `url('/assets/hero-background.png')` }}>
+        <div className="absolute inset-0 bg-brandGreen-dark opacity-70"></div>
+        <div className="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl">
+                <h1 className="text-4xl md:text-6xl font-display font-bold mb-4">Portal de Transparência</h1>
+                <p className="text-lg md:text-xl mb-8">Bem-vindo ao portal oficial do condomínio Collina Belvedere</p>
+                <button onClick={() => setCurrentPage('comunicados')} className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all transform hover:scale-105 inline-flex items-center gap-2">
+                    Ver Comunicados <ExternalLink size={20} />
+                </button>
+            </div>
+        </div>
+      </section>
+
+      {/* Explore o Portal */}
+      <section className="py-16">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-brandGreen mb-12 font-display">Explore o Portal</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {exploreItems.map(item => (
+              <a href={`#${item.page}`} onClick={() => setCurrentPage(item.page)} key={item.title} className={`p-6 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 text-center ${exploreColors[item.color as keyof typeof exploreColors].split(' ')[0]}`}>
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${exploreColors[item.color as keyof typeof exploreColors]}`}>
+                  <item.icon size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">{item.title}</h3>
+                <p className="text-gray-600">{item.description}</p>
+              </a>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Últimos Comunicados */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-2 font-display">Últimos Comunicados</h2>
-           <p className="text-center text-gray-500 mb-12">Fique por dentro das novidades e avisos importantes do condomínio.</p>
+      <section className="bg-gray-100 py-16">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center text-brandGreen mb-2 font-display">Últimos Comunicados</h2>
+           <p className="text-center text-gray-500 mb-12">Fique por dentro das novidades e avisos importantes.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {loading ? (
                 Array.from({ length: 3 }).map((_, index) => <ComunicadoCardSkeleton key={index} />)
             ) : (
                 comunicados.map(comunicado => (
-              <div key={comunicado.id} className="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform hover:-translate-y-2 duration-300">
-                {comunicado.imagem_url && <img className="h-48 w-full object-cover" src={comunicado.imagem_url} alt={comunicado.titulo} />}
-                <div className="p-6">
-                  <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full uppercase ${getCategoriaBadgeStyle(comunicado.categoria)}`}>
-                    {comunicado.categoria}
-                  </span>
-                  <h3 className="mt-4 text-xl font-bold text-gray-900">{comunicado.titulo}</h3>
-                  <p className="mt-2 text-gray-600 line-clamp-3">{comunicado.conteudo}</p>
-                   <p className="mt-4 text-sm text-gray-500">{new Date(comunicado.data_publicacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                </div>
-              </div>
-            )))}
+                    <div key={comunicado.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div>
+                            <span className="bg-brandGreen text-white text-xs font-bold uppercase px-2 py-1 rounded">{comunicado.categoria || 'Aviso'}</span>
+                            <h3 className="mt-4 mb-2 text-xl font-bold text-gray-900 line-clamp-2">{comunicado.titulo}</h3>
+                            <div className="flex items-center text-sm text-gray-500 mb-4">
+                                <CalendarIcon size={16} className="mr-2" />
+                                {new Date(comunicado.data_publicacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                            </div>
+                            <p className="text-gray-600 line-clamp-3 mb-4">{comunicado.conteudo}</p>
+                        </div>
+                        <a href="#comunicados" onClick={() => setCurrentPage('comunicados')} className="font-semibold text-brandGreen hover:text-brandGreen-dark transition-colors flex items-center">
+                            Ler Mais <ArrowRight className="ml-2 h-4 w-4" />
+                        </a>
+                    </div>
+                ))
+            )}
           </div>
           <div className="text-center mt-12">
-            <button onClick={() => setCurrentPage('comunicados')} className="text-brandGreen font-semibold hover:text-brandGreen-dark transition-colors flex items-center justify-center mx-auto">
-              Ver todos os comunicados <ArrowRight className="ml-2 h-5 w-5" />
+            <button onClick={() => setCurrentPage('comunicados')} className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all">
+              Ver Todos os Comunicados
             </button>
           </div>
         </div>
       </section>
       
-      {/* Parceiros em Destaque */}
-       <section className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-2 font-display">Nossos Parceiros em Destaque</h2>
-           <p className="text-center text-gray-500 mb-12">Serviços e produtos com vantagens exclusivas para moradores.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {loading ? (
-                 Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="bg-gray-100 p-6 rounded-lg animate-pulse h-48"></div>
-                ))
-            ) : (
-                anunciantes.map(anunciante => (
-              <div key={anunciante.id} className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center transform transition-transform hover:scale-105 duration-300">
-                <img src={anunciante.logo_url} alt={anunciante.nome_empresa} className="h-16 w-16 rounded-full mx-auto mb-4 object-cover" />
-                <h3 className="text-lg font-bold text-gray-900">{anunciante.nome_empresa}</h3>
-                <p className="text-sm text-gray-500">{anunciante.categorias_anunciantes.nome}</p>
-              </div>
-            )))}
-          </div>
-           <div className="text-center mt-12">
-            <button onClick={() => setCurrentPage('parceiros')} className="bg-brandGreen text-white font-bold py-3 px-6 rounded-lg hover:bg-brandGreen-dark transition-colors">
-              Ver todos os parceiros
-            </button>
-          </div>
+      {/* Acesso Rápido */}
+       <section className="py-16">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-center text-brandGreen mb-12 font-display">Acesso Rápido</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-white p-8 rounded-lg border-2 border-brandLime-DEFAULT shadow-lg">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3">Aplicativo do Morador</h3>
+                    <p className="text-gray-600 mb-6">Faça reservas de espaços e solicite serviços pelo aplicativo oficial.</p>
+                    <button className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-2 px-6 rounded-md transition-all">Acessar Aplicativo</button>
+                </div>
+                <div className="bg-white p-8 rounded-lg border-2 border-brandLime-DEFAULT shadow-lg">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3">Suporte e Dúvidas</h3>
+                    <p className="text-gray-600 mb-6">Entre em contato conosco através do WhatsApp durante o horário comercial.</p>
+                    <button className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-2 px-6 rounded-md transition-all">Entrar em Contato</button>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      {/* Entre em Contato */}
+      <section className="bg-gray-100 py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white p-8 rounded-lg shadow-xl">
+                <h2 className="text-3xl font-bold text-center text-brandGreen mb-8 font-display">Entre em Contato</h2>
+                <form onSubmit={handleContactSubmit}>
+                    <div className="mb-4">
+                        <label htmlFor="nome" className="block text-gray-700 font-medium mb-1">Nome</label>
+                        <input type="text" name="nome" id="nome" required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-brandGreen focus:border-brandGreen" onChange={handleInputChange} value={contactForm.nome} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label htmlFor="bloco" className="block text-gray-700 font-medium mb-1">Bloco</label>
+                            <input type="text" name="bloco" id="bloco" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-brandGreen focus:border-brandGreen" onChange={handleInputChange} value={contactForm.bloco} />
+                        </div>
+                        <div>
+                            <label htmlFor="apartamento" className="block text-gray-700 font-medium mb-1">Apartamento</label>
+                            <input type="text" name="apartamento" id="apartamento" className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-brandGreen focus:border-brandGreen" onChange={handleInputChange} value={contactForm.apartamento} />
+                        </div>
+                    </div>
+                     <div className="mb-6">
+                        <label htmlFor="mensagem" className="block text-gray-700 font-medium mb-1">Mensagem</label>
+                        <textarea name="mensagem" id="mensagem" rows={4} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-brandGreen focus:border-brandGreen" onChange={handleInputChange} value={contactForm.mensagem}></textarea>
+                    </div>
+                    <button type="submit" className="w-full bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all flex items-center justify-center gap-2">
+                        <Send size={20} /> Enviar via WhatsApp
+                    </button>
+                </form>
+            </div>
         </div>
       </section>
 

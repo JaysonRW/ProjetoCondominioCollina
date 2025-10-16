@@ -1,5 +1,5 @@
-// FIX: Changed React import to a namespace import and updated hook calls to fix JSX typing errors.
-import * as React from 'react';
+// FIX: Corrected React import to fix JSX typing errors and updated hook calls.
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -16,9 +16,9 @@ const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
 );
 
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = React.useState('home');
+  const [currentPage, setCurrentPage] = useState('home');
 
-  React.useEffect(() => {
+  useEffect(() => {
     const validPages = ['home', 'comunicados', 'parceiros', 'documentos', 'galeria', 'eventos', 'faq', 'sindico'];
     
     const handleHashChange = () => {
@@ -52,7 +52,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen font-sans bg-gray-100">
+    <div className="flex flex-col min-h-screen font-sans bg-gray-50">
       <Header setCurrentPage={(page) => window.location.hash = page} currentPage={currentPage} />
       <main className="flex-grow">
         {renderPage()}

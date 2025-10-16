@@ -1,5 +1,5 @@
-// FIX: Changed React import to a namespace import to fix JSX typing errors.
-import * as React from 'react';
+// FIX: Corrected React import to fix JSX typing errors.
+import React from 'react';
 import { Building2 } from 'lucide-react';
 
 const Footer: React.FC = () => {

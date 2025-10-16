@@ -1,8 +1,8 @@
-
 import React from 'react';
-import { icons } from 'lucide-react';
+import { icons, LucideProps } from 'lucide-react';
 
-interface IconProps extends React.SVGProps<SVGSVGElement> {
+// FIX: Update IconProps to extend LucideProps. This allows passing props like 'size' to the underlying Lucide icon, fixing type errors.
+interface IconProps extends LucideProps {
   name: string;
 }
 

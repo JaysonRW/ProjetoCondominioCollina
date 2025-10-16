@@ -1,34 +1,46 @@
-// FIX: Changed React import to a namespace import and updated hook calls to fix JSX typing errors.
-import * as React from 'react';
-import { getComunicados } from '../services/api';
+// FIX: Corrected React import to fix JSX typing errors and updated hook calls.
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createComunicado, getComunicados } from '../services/api';
 import { Comunicado } from '../types/types';
 import Modal from '../components/Modal';
-import { Search, Tag, Calendar, User } from 'lucide-react';
+import { Search, Tag, Calendar, User, PlusCircle, UploadCloud, FileImage } from 'lucide-react';
 import { ComunicadoCardSkeleton } from '../components/Skeleton';
 
 const ComunicadosPage: React.FC = () => {
-  const [comunicados, setComunicados] = React.useState<Comunicado[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [selectedCategory, setSelectedCategory] = React.useState<string>('all');
-  const [selectedComunicado, setSelectedComunicado] = React.useState<Comunicado | null>(null);
+  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedComunicado, setSelectedComunicado] = useState<Comunicado | null>(null);
 
-  React.useEffect(() => {
-    const loadComunicados = async () => {
-      setLoading(true);
-      const data = await getComunicados();
-      setComunicados(data);
-      setLoading(false);
-    };
-    loadComunicados();
+  // State for creating new comunicado
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newComunicadoData, setNewComunicadoData] = useState({
+    titulo: '',
+    conteudo: '',
+    categoria: 'informativo',
+    autor: 'Administração', // Hardcoded for now
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const loadComunicados = useCallback(async () => {
+    setLoading(true);
+    const data = await getComunicados();
+    setComunicados(data);
+    setLoading(false);
   }, []);
 
-  const categories = React.useMemo(() => {
+  useEffect(() => {
+    loadComunicados();
+  }, [loadComunicados]);
+
+  const categories = useMemo(() => {
     const cats = new Set(comunicados.map(c => c.categoria));
     return ['all', ...Array.from(cats)];
   }, [comunicados]);
 
-  const filteredComunicados = React.useMemo(() => {
+  const filteredComunicados = useMemo(() => {
     return comunicados.filter(comunicado => {
       const matchesCategory = selectedCategory === 'all' || comunicado.categoria === selectedCategory;
       const matchesSearch = searchTerm === '' || 
@@ -46,6 +58,37 @@ const ComunicadosPage: React.FC = () => {
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewComunicadoData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+    } else {
+      setImageFile(null);
+    }
+  };
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const result = await createComunicado(newComunicadoData, imageFile || undefined);
+
+    if (result) {
+      alert('Comunicado criado com sucesso!');
+      setIsCreateModalOpen(false);
+      setNewComunicadoData({ titulo: '', conteudo: '', categoria: 'informativo', autor: 'Administração' });
+      setImageFile(null);
+      await loadComunicados(); // Refresh list
+    } else {
+      alert('Falha ao criar comunicado. Tente novamente.');
+    }
+    setIsSubmitting(false);
+  };
+
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -54,9 +97,9 @@ const ComunicadosPage: React.FC = () => {
           <p className="mt-2 text-lg text-gray-600">Avisos, eventos e informações importantes do condomínio.</p>
         </div>
 
-        {/* Filters */}
+        {/* Filters and Actions */}
         <div className="bg-white p-4 rounded-lg shadow-sm mb-8 flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative w-full md:w-1/2">
+          <div className="relative w-full md:flex-grow">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
@@ -78,6 +121,15 @@ const ComunicadosPage: React.FC = () => {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="w-full md:w-auto">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="w-full bg-brandGreen text-white font-semibold px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-brandGreen-dark transition-colors"
+            >
+              <PlusCircle size={20} />
+              Novo Comunicado
+            </button>
           </div>
         </div>
 
@@ -138,6 +190,65 @@ const ComunicadosPage: React.FC = () => {
           <div className="prose max-w-none text-gray-800 whitespace-pre-wrap">{selectedComunicado.conteudo}</div>
         </Modal>
       )}
+
+      {/* Modal para criar comunicado */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Criar Novo Comunicado"
+      >
+        <form onSubmit={handleCreateSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="titulo" className="block text-sm font-medium text-gray-700">Título</label>
+            <input type="text" name="titulo" id="titulo" required value={newComunicadoData.titulo} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen"/>
+          </div>
+          <div>
+            <label htmlFor="categoria" className="block text-sm font-medium text-gray-700">Categoria</label>
+            <select name="categoria" id="categoria" value={newComunicadoData.categoria} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen">
+              <option value="informativo">Informativo</option>
+              <option value="evento">Evento</option>
+              <option value="urgente">Urgente</option>
+              <option value="manutenção">Manutenção</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="conteudo" className="block text-sm font-medium text-gray-700">Conteúdo</label>
+            <textarea name="conteudo" id="conteudo" rows={5} required value={newComunicadoData.conteudo} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen"></textarea>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Imagem (Opcional)</label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+              <div className="space-y-1 text-center">
+                {imageFile ? (
+                  <>
+                    <FileImage className="mx-auto h-12 w-12 text-brandGreen" />
+                    <p className="text-sm text-gray-600">{imageFile.name}</p>
+                    <button type="button" onClick={() => setImageFile(null)} className="text-xs text-red-500 hover:underline">Remover</button>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-brandGreen hover:text-brandGreen-dark focus-within:outline-none">
+                        <span>Carregar um arquivo</span>
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept="image/*"/>
+                      </label>
+                      <p className="pl-1">ou arraste e solte</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF até 10MB</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="pt-4 flex justify-end gap-3">
+            <button type="button" onClick={() => setIsCreateModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors">Cancelar</button>
+            <button type="submit" disabled={isSubmitting} className="bg-brandGreen text-white px-4 py-2 rounded-md hover:bg-brandGreen-dark transition-colors disabled:bg-gray-400">
+              {isSubmitting ? 'Publicando...' : 'Publicar Comunicado'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

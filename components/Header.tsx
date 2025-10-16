@@ -1,5 +1,5 @@
-// FIX: Changed React import to a namespace import to fix JSX typing errors.
-import * as React from 'react';
+// FIX: Corrected React import to fix JSX typing errors.
+import React, { useState } from 'react';
 import { Menu, X, UserCircle } from 'lucide-react';
 
 interface HeaderProps {
@@ -13,10 +13,10 @@ const NavLink: React.FC<{ page: string; currentPage: string; onClick: () => void
     onClick={onClick}
     className={isButton 
       ? `flex items-center gap-2 bg-brandGreen text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-brandGreen-dark transition-colors`
-      : `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+      : `px-3 py-2 rounded-md text-sm font-medium transition-colors text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.6)] ${
           currentPage === page
-            ? 'text-brandGreen-dark font-bold'
-            : 'text-gray-700 hover:text-brandGreen'
+            ? 'font-bold text-brandLime'
+            : 'hover:text-brandLime'
         }`
     }
   >
@@ -25,7 +25,7 @@ const NavLink: React.FC<{ page: string; currentPage: string; onClick: () => void
 );
 
 const Header: React.FC<HeaderProps> = ({ setCurrentPage, currentPage }) => {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleNavClick = (page: string) => {
     setCurrentPage(page);
@@ -43,12 +43,14 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage, currentPage }) => {
   ];
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="relative bg-cover bg-center sticky top-0 z-50" style={{ backgroundImage: "url('/assets/header-bg.jpg')" }}>
+      {/* IMPROVEMENT: Changed the solid overlay to a gradient for better aesthetics and readability of the navigation bar. */}
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(42, 60, 51, 0.8) 0%, rgba(42, 60, 51, 0.3) 100%)' }}></div>
+      <div className="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex-shrink-0">
             <a href="#home" onClick={() => handleNavClick('home')} className="flex items-center">
-              <img src="/assets/logo.png" alt="Collina Belvedere Logo" className="h-14 w-auto" />
+              <img src="/assets/logo.png" alt="Collina Belvedere Logo" className="h-14 w-auto drop-shadow-lg" />
             </a>
           </div>
 
@@ -68,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage, currentPage }) => {
           <div className="flex items-center lg:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-brandGreen hover:bg-brandGreen hover:text-white focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-white/20 focus:outline-none"
               aria-controls="mobile-menu" 
               aria-expanded="false"
             >
@@ -80,10 +82,10 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage, currentPage }) => {
       </div>
 
       {isMenuOpen && (
-        <div className="lg:hidden" id="mobile-menu">
+        <div className="lg:hidden absolute w-full bg-brandGreen-dark/95 backdrop-blur-sm" id="mobile-menu">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
              {navItems.map(item => (
-              <a key={item.page} href={`#${item.page}`} onClick={() => handleNavClick(item.page)} className={`block px-3 py-2 rounded-md text-base font-medium ${currentPage === item.page ? 'bg-brandGreen text-white' : 'text-gray-700 hover:bg-gray-100'}`}>{item.label}</a>
+              <a key={item.page} href={`#${item.page}`} onClick={() => handleNavClick(item.page)} className={`block px-3 py-2 rounded-md text-base font-medium ${currentPage === item.page ? 'bg-brandLime text-brandGreen-dark' : 'text-white hover:bg-brandGreen'}`}>{item.label}</a>
             ))}
             <div className="px-3 pt-4 pb-2">
                 <NavLink page="sindico" currentPage={currentPage} onClick={() => handleNavClick('sindico')} isButton>

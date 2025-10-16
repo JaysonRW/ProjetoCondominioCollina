@@ -21,6 +21,53 @@ export const getComunicados = async (limit?: number): Promise<Comunicado[]> => {
   return data as Comunicado[];
 };
 
+export const createComunicado = async (
+  comunicadoData: Omit<Comunicado, 'id' | 'data_publicacao' | 'ativo'>,
+  imageFile?: File
+): Promise<Comunicado | null> => {
+  let imageUrl: string | undefined = undefined;
+
+  // 1. Upload image if it exists
+  if (imageFile) {
+    const filePath = `public/${Date.now()}-${imageFile.name}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from('comunicados-imagens')
+      .upload(filePath, imageFile);
+
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      // Don't fail the whole process, just log the error. The post will be created without an image.
+    } else {
+        const { data: urlData } = supabase.storage
+          .from('comunicados-imagens')
+          .getPublicUrl(filePath);
+        imageUrl = urlData.publicUrl;
+    }
+  }
+
+  // 2. Prepare data for insertion
+  const dataToInsert = {
+    ...comunicadoData,
+    imagem_url: imageUrl,
+  };
+
+  // 3. Insert into database
+  const { data, error } = await supabase
+    .from('comunicados')
+    .insert([dataToInsert])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating comunicado:', error);
+    return null;
+  }
+
+  return data as Comunicado;
+};
+
+
 export const getCategorias = async (): Promise<Categoria[]> => {
     const { data, error } = await supabase
       .from('categorias_anunciantes')
