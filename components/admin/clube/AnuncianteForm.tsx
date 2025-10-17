@@ -9,6 +9,16 @@ interface AnuncianteFormProps {
   onCancel: () => void;
 }
 
+// FIX: Moved FormSection outside of AnuncianteForm. 
+// Defining a component inside another causes it to be recreated on every render,
+// leading to state loss, focus loss, and scroll jumping issues.
+const FormSection: React.FC<{title: string, children: React.ReactNode}> = ({ title, children }) => (
+    <div className="pt-4 border-t">
+        <h3 className="text-md font-semibold text-gray-800 mb-3">{title}</h3>
+        {children}
+    </div>
+);
+
 const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, onCancel }) => {
   const [formData, setFormData] = useState<Partial<Anunciante>>({});
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -139,13 +149,6 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
       setIsSubmitting(false);
     }
   };
-  
-  const FormSection: React.FC<{title: string, children: React.ReactNode}> = ({ title, children }) => (
-    <div className="pt-4 border-t">
-        <h3 className="text-md font-semibold text-gray-800 mb-3">{title}</h3>
-        {children}
-    </div>
-  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 text-sm">
