@@ -1,39 +1,52 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { getEventos } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { getEventosPaginados } from '../services/api';
 import { Evento } from '../types/types';
 import Modal from '../components/Modal';
-import { Calendar, Clock, MapPin, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, MapPin, ChevronRight, ChevronLeft } from 'lucide-react';
 import Skeleton from '../components/Skeleton';
+
+const PAGE_SIZE = 10;
 
 const EventosPage: React.FC = () => {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
+  const [activeTab, setActiveTab] = useState<'proximos' | 'anteriores'>('proximos');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const loadEventos = async () => {
       setLoading(true);
-      const data = await getEventos();
+      window.scrollTo(0, 0); // Scroll to top on page change
+      const { data, count } = await getEventosPaginados({
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        filter: activeTab,
+      });
       setEventos(data);
+      setTotalPages(Math.ceil(count / PAGE_SIZE));
       setLoading(false);
     };
     loadEventos();
-  }, []);
+  }, [currentPage, activeTab]);
 
-  const { proximosEventos, eventosAnteriores } = useMemo(() => {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+  const handleTabChange = (tab: 'proximos' | 'anteriores') => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset page when changing tabs
+  };
 
-    const proximos = eventos
-      .filter(e => new Date(e.data_evento) >= hoje)
-      .sort((a, b) => new Date(a.data_evento).getTime() - new Date(b.data_evento).getTime());
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
-    const anteriores = eventos
-      .filter(e => new Date(e.data_evento) < hoje)
-      .sort((a, b) => new Date(b.data_evento).getTime() - new Date(a.data_evento).getTime());
-
-    return { proximosEventos: proximos, eventosAnteriores: anteriores };
-  }, [eventos]);
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   const EventCard: React.FC<{ evento: Evento }> = ({ evento }) => (
     <div
@@ -77,20 +90,17 @@ const EventosPage: React.FC = () => {
      </div>
   );
 
-
-  const renderEventList = (title: string, list: Evento[]) => (
-    <section className="mb-16">
-      <h2 className="text-3xl font-bold text-brandGreen-dark font-display mb-8">{title}</h2>
-      {list.length > 0 ? (
-        <div className="space-y-8">
-          {list.map(evento => <EventCard key={evento.id} evento={evento} />)}
-        </div>
-      ) : (
-        <div className="bg-white text-center p-12 rounded-lg shadow-sm">
-          <p className="text-gray-600">Nenhum evento nesta categoria no momento.</p>
-        </div>
-      )}
-    </section>
+  const TabButton: React.FC<{ tab: 'proximos' | 'anteriores'; children: React.ReactNode }> = ({ tab, children }) => (
+    <button
+      onClick={() => handleTabChange(tab)}
+      className={`px-6 py-2 font-semibold rounded-md transition-colors focus:outline-none ${
+        activeTab === tab
+          ? 'bg-brandGreen text-white'
+          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+      }`}
+    >
+      {children}
+    </button>
   );
 
   return (
@@ -101,17 +111,49 @@ const EventosPage: React.FC = () => {
           <p className="mt-2 text-lg text-gray-600">Fique por dentro das atividades e confraternizações do condomínio.</p>
         </div>
 
+        <div className="flex space-x-4 mb-8">
+            <TabButton tab="proximos">Próximos Eventos</TabButton>
+            <TabButton tab="anteriores">Eventos Anteriores</TabButton>
+        </div>
+
         {loading ? (
             <div className="space-y-8">
-                <EventCardSkeleton />
-                <EventCardSkeleton />
-                <EventCardSkeleton />
+                {Array.from({ length: 3 }).map((_, i) => <EventCardSkeleton key={i} />)}
             </div>
-        ) : (
+        ) : eventos.length > 0 ? (
             <>
-                {renderEventList('Próximos Eventos', proximosEventos)}
-                {renderEventList('Eventos Anteriores', eventosAnteriores)}
+                <div className="space-y-8">
+                    {eventos.map(evento => <EventCard key={evento.id} evento={evento} />)}
+                </div>
+
+                {totalPages > 1 && (
+                    <div className="mt-12 flex justify-between items-center">
+                        <button
+                            onClick={handlePrevPage}
+                            disabled={currentPage === 1}
+                            className="flex items-center gap-2 px-4 py-2 bg-brandGreen text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-brandGreen-dark transition-colors"
+                        >
+                            <ChevronLeft size={20} />
+                            Anterior
+                        </button>
+                        <span className="text-gray-700 font-medium">
+                            Página {currentPage} de {totalPages}
+                        </span>
+                        <button
+                            onClick={handleNextPage}
+                            disabled={currentPage === totalPages}
+                            className="flex items-center gap-2 px-4 py-2 bg-brandGreen text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-brandGreen-dark transition-colors"
+                        >
+                            Próximo
+                            <ChevronRight size={20} />
+                        </button>
+                    </div>
+                )}
             </>
+        ) : (
+            <div className="bg-white text-center p-12 rounded-lg shadow-sm">
+                <p className="text-gray-600">Nenhum evento encontrado para esta categoria.</p>
+            </div>
         )}
       </div>
 

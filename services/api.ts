@@ -264,3 +264,41 @@ export const deleteEvento = async (id: string): Promise<boolean> => {
   }
   return true;
 };
+
+export const getEventosPaginados = async (options: {
+  page: number;
+  pageSize: number;
+  filter: 'proximos' | 'anteriores';
+}): Promise<{ data: Evento[]; count: number }> => {
+  const { page, pageSize, filter } = options;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayISOString = today.toISOString();
+
+  let query = supabase
+    .from('eventos')
+    .select('*', { count: 'exact' })
+    .eq('ativo', true);
+
+  if (filter === 'proximos') {
+    query = query
+      .gte('data_evento', todayISOString)
+      .order('data_evento', { ascending: true });
+  } else { // 'anteriores'
+    query = query
+      .lt('data_evento', todayISOString)
+      .order('data_evento', { ascending: false });
+  }
+
+  const { data, error, count } = await query.range(from, to);
+
+  if (error) {
+    console.error('Error fetching paginated eventos:', error);
+    return { data: [], count: 0 };
+  }
+
+  return { data: data as Evento[], count: count ?? 0 };
+};
