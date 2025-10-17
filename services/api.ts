@@ -289,10 +289,10 @@ export const createAnunciante = async (anuncianteData: Omit<Anunciante, 'id' | '
     let banner_url;
 
     if (logoFile) {
-        logo_url = await uploadFile(logoFile, 'imagens', `anunciantes/${Date.now()}_logo_${logoFile.name}`) ?? '';
+        logo_url = await uploadFile(logoFile, 'imagens_anunciantes', `anunciantes/${Date.now()}_logo_${logoFile.name}`) ?? '';
     }
     if (bannerFile) {
-        banner_url = await uploadFile(bannerFile, 'imagens', `anunciantes/${Date.now()}_banner_${bannerFile.name}`);
+        banner_url = await uploadFile(bannerFile, 'imagens_anunciantes', `anunciantes/${Date.now()}_banner_${bannerFile.name}`);
     }
 
     const { data, error } = await supabase
@@ -311,10 +311,10 @@ export const updateAnunciante = async (id: string, updates: Partial<Anunciante>,
     const finalUpdates: Partial<Anunciante> = { ...updates };
 
     if (logoFile) {
-        finalUpdates.logo_url = await uploadFile(logoFile, 'imagens', `anunciantes/${id}_logo_${logoFile.name}`) ?? undefined;
+        finalUpdates.logo_url = await uploadFile(logoFile, 'imagens_anunciantes', `anunciantes/${id}_logo_${logoFile.name}`) ?? undefined;
     }
     if (bannerFile) {
-        finalUpdates.banner_url = await uploadFile(bannerFile, 'imagens', `anunciantes/${id}_banner_${bannerFile.name}`) ?? undefined;
+        finalUpdates.banner_url = await uploadFile(bannerFile, 'imagens_anunciantes', `anunciantes/${id}_banner_${bannerFile.name}`) ?? undefined;
     }
 
     const { data, error } = await supabase
@@ -332,8 +332,8 @@ export const updateAnunciante = async (id: string, updates: Partial<Anunciante>,
 };
 
 export const deleteAnunciante = async (id: string, logoUrl?: string, bannerUrl?: string): Promise<boolean> => {
-    if (logoUrl) await deleteFile('imagens', logoUrl);
-    if (bannerUrl) await deleteFile('imagens', bannerUrl);
+    if (logoUrl) await deleteFile('imagens_anunciantes', logoUrl);
+    if (bannerUrl) await deleteFile('imagens_anunciantes', bannerUrl);
 
     const { error } = await supabase.from('anunciantes').delete().eq('id', id);
     if (error) {
