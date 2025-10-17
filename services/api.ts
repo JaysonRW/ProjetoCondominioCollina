@@ -401,7 +401,7 @@ export const createDocumento = async (
     .getPublicUrl(filePath);
   const fileUrl = urlData.publicUrl;
 
-  const dataToInsert = { ...documentoData, url_arquivo: fileUrl };
+  const dataToInsert = { ...documentoData, url_arquivo: fileUrl, data_upload: new Date().toISOString() };
   const { data, error } = await supabase
     .from('documento')
     .insert([dataToInsert])
@@ -471,7 +471,7 @@ export const createImagemGaleria = async (
     .getPublicUrl(filePath);
   const imageUrl = urlData.publicUrl;
 
-  const dataToInsert = { ...imagemData, url_imagem: imageUrl };
+  const dataToInsert = { ...imagemData, url_imagem: imageUrl, data_upload: new Date().toISOString() };
   const { data, error } = await supabase
     .from('galeria_imagem')
     .insert([dataToInsert])
