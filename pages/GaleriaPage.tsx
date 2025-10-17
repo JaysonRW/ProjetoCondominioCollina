@@ -63,6 +63,8 @@ const GaleriaPage: React.FC = () => {
     if (!isLightboxOpen || activeAlbumImages.length === 0) return null;
     const image = activeAlbumImages[currentImageIndex];
 
+    //teste
+
     return (
       <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={closeLightbox}>
         <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
