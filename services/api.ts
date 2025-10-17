@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Anunciante, Categoria, Comunicado, Cupom, Faq, Evento } from '../types/types';
+import { Anunciante, Categoria, Comunicado, Cupom, Faq, Evento, Documento, GaleriaImagem } from '../types/types';
 
 // ==================
 // COMUNICADOS API
@@ -301,4 +301,142 @@ export const getEventosPaginados = async (options: {
   }
 
   return { data: data as Evento[], count: count ?? 0 };
+};
+
+
+// ==================
+// DOCUMENTOS API
+// ==================
+
+export const getDocumentos = async (): Promise<Documento[]> => {
+  const { data, error } = await supabase
+    .from('documentos')
+    .select('*')
+    .order('data_upload', { ascending: false });
+  if (error) {
+    console.error('Error fetching documentos:', error);
+    return [];
+  }
+  return data as Documento[];
+};
+
+export const createDocumento = async (
+  documentoData: Omit<Documento, 'id' | 'url_arquivo' | 'data_upload'>,
+  file: File
+): Promise<Documento | null> => {
+  const filePath = `public/documentos/${Date.now()}-${file.name}`;
+  const { error: uploadError } = await supabase.storage
+    .from('documentos-arquivos')
+    .upload(filePath, file);
+
+  if (uploadError) {
+    console.error('Error uploading document file:', uploadError);
+    return null;
+  }
+
+  const { data: urlData } = supabase.storage
+    .from('documentos-arquivos')
+    .getPublicUrl(filePath);
+  const fileUrl = urlData.publicUrl;
+
+  const dataToInsert = { ...documentoData, url_arquivo: fileUrl };
+  const { data, error } = await supabase
+    .from('documentos')
+    .insert([dataToInsert])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating documento:', error);
+    return null;
+  }
+  return data as Documento;
+};
+
+export const deleteDocumento = async (id: string, url_arquivo: string): Promise<boolean> => {
+  // First, delete the file from storage
+  const filePath = url_arquivo.substring(url_arquivo.indexOf('public/documentos/'));
+  const { error: storageError } = await supabase.storage
+    .from('documentos-arquivos')
+    .remove([filePath]);
+
+  if (storageError) {
+    console.error('Error deleting document file from storage:', storageError);
+    // Don't block DB deletion if storage fails, but log it.
+  }
+
+  // Then, delete the record from the database
+  const { error } = await supabase.from('documentos').delete().eq('id', id);
+  if (error) {
+    console.error('Error deleting documento record:', error);
+    return false;
+  }
+  return true;
+};
+
+// ==================
+// GALERIA API
+// ==================
+
+export const getImagensGaleria = async (): Promise<GaleriaImagem[]> => {
+    const { data, error } = await supabase
+      .from('galeria_imagens')
+      .select('*')
+      .order('data_upload', { ascending: false });
+    if (error) {
+      console.error('Error fetching galeria imagens:', error);
+      return [];
+    }
+    return data as GaleriaImagem[];
+};
+
+export const createImagemGaleria = async (
+  imagemData: Omit<GaleriaImagem, 'id' | 'url_imagem' | 'data_upload'>,
+  imageFile: File
+): Promise<GaleriaImagem | null> => {
+  const filePath = `public/galeria/${Date.now()}-${imageFile.name}`;
+  const { error: uploadError } = await supabase.storage
+    .from('galeria-imagens')
+    .upload(filePath, imageFile);
+
+  if (uploadError) {
+    console.error('Error uploading galeria image:', uploadError);
+    return null;
+  }
+
+  const { data: urlData } = supabase.storage
+    .from('galeria-imagens')
+    .getPublicUrl(filePath);
+  const imageUrl = urlData.publicUrl;
+
+  const dataToInsert = { ...imagemData, url_imagem: imageUrl };
+  const { data, error } = await supabase
+    .from('galeria_imagens')
+    .insert([dataToInsert])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating galeria imagem:', error);
+    return null;
+  }
+  return data as GaleriaImagem;
+};
+
+export const deleteImagemGaleria = async (id: string, url_imagem: string): Promise<boolean> => {
+  const filePath = url_imagem.substring(url_imagem.indexOf('public/galeria/'));
+  const { error: storageError } = await supabase.storage
+    .from('galeria-imagens')
+    .remove([filePath]);
+
+  if (storageError) {
+    console.error('Error deleting image from storage:', storageError);
+  }
+
+  const { error } = await supabase.from('galeria_imagens').delete().eq('id', id);
+  if (error) {
+    console.error('Error deleting galeria imagem record:', error);
+    return false;
+  }
+  return true;
 };

@@ -68,3 +68,21 @@ export interface Evento {
   imagem_url?: string;
   ativo: boolean;
 }
+
+export interface Documento {
+  id: string;
+  titulo: string;
+  descricao?: string;
+  url_arquivo: string;
+  categoria: string;
+  data_upload: string;
+}
+
+export interface GaleriaImagem {
+  id: string;
+  titulo: string;
+  descricao?: string;
+  url_imagem: string;
+  album: string;
+  data_upload: string;
+}

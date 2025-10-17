@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LogOut, PlusCircle, UploadCloud, FileImage, Bell, ImageIcon, Calendar, FileText, HelpCircle, Edit, Trash2 } from 'lucide-react';
 import Modal from '../components/Modal';
-import { createComunicado, getFaqs, createFaq, updateFaq, deleteFaq, getEventos, createEvento, updateEvento, deleteEvento } from '../services/api';
-import { Faq, Evento } from '../types/types';
+import { 
+  createComunicado, 
+  getFaqs, createFaq, updateFaq, deleteFaq, 
+  getEventos, createEvento, updateEvento, deleteEvento,
+  getDocumentos, createDocumento, deleteDocumento,
+  getImagensGaleria, createImagemGaleria, deleteImagemGaleria
+} from '../services/api';
+import { Faq, Evento, Documento, GaleriaImagem } from '../types/types';
 import Skeleton from '../components/Skeleton';
 
 interface AdminPageProps {
@@ -35,6 +41,24 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
   const [isEditingEvento, setIsEditingEvento] = useState(false);
   const [eventoImageFile, setEventoImageFile] = useState<File | null>(null);
 
+  // State for Documentos
+  const [documentos, setDocumentos] = useState<Documento[]>([]);
+  const [loadingDocumentos, setLoadingDocumentos] = useState(false);
+  const [isDocumentoModalOpen, setIsDocumentoModalOpen] = useState(false);
+  const [newDocumentoData, setNewDocumentoData] = useState({
+    titulo: '', descricao: '', categoria: 'Atas',
+  });
+  const [documentoFile, setDocumentoFile] = useState<File | null>(null);
+
+  // State for Galeria
+  const [imagensGaleria, setImagensGaleria] = useState<GaleriaImagem[]>([]);
+  const [loadingGaleria, setLoadingGaleria] = useState(false);
+  const [isGaleriaModalOpen, setIsGaleriaModalOpen] = useState(false);
+  const [newImagemData, setNewImagemData] = useState({
+    titulo: '', descricao: '', album: 'Geral',
+  });
+  const [imagemGaleriaFile, setImagemGaleriaFile] = useState<File | null>(null);
+
 
   const loadFaqs = useCallback(async () => {
     setLoadingFaqs(true);
@@ -50,6 +74,20 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
     setLoadingEventos(false);
   }, []);
 
+  const loadDocumentos = useCallback(async () => {
+    setLoadingDocumentos(true);
+    const data = await getDocumentos();
+    setDocumentos(data);
+    setLoadingDocumentos(false);
+  }, []);
+
+  const loadImagensGaleria = useCallback(async () => {
+    setLoadingGaleria(true);
+    const data = await getImagensGaleria();
+    setImagensGaleria(data);
+    setLoadingGaleria(false);
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'faq') {
       loadFaqs();
@@ -57,7 +95,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
     if (activeTab === 'eventos') {
       loadEventos();
     }
-  }, [activeTab, loadFaqs, loadEventos]);
+    if (activeTab === 'documentos') {
+      loadDocumentos();
+    }
+    if (activeTab === 'galeria') {
+      loadImagensGaleria();
+    }
+  }, [activeTab, loadFaqs, loadEventos, loadDocumentos, loadImagensGaleria]);
 
   const handleCreateComunicadoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,6 +214,71 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
     }
   };
 
+  const handleDocumentoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!documentoFile) {
+        alert('Por favor, selecione um arquivo para o documento.');
+        return;
+    }
+    setIsSubmitting(true);
+    const result = await createDocumento(newDocumentoData, documentoFile);
+    if (result) {
+        alert('Documento adicionado com sucesso!');
+        setIsDocumentoModalOpen(false);
+        setNewDocumentoData({ titulo: '', descricao: '', categoria: 'Atas' });
+        setDocumentoFile(null);
+        loadDocumentos();
+    } else {
+        alert('Falha ao adicionar documento. Tente novamente.');
+    }
+    setIsSubmitting(false);
+  };
+  
+  const handleDocumentoDelete = async (id: string, url_arquivo: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este documento? O arquivo será removido permanentemente.')) {
+        const success = await deleteDocumento(id, url_arquivo);
+        if (success) {
+            alert('Documento excluído com sucesso!');
+            loadDocumentos();
+        } else {
+            alert('Falha ao excluir o documento.');
+        }
+    }
+  };
+  
+  const handleImagemGaleriaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!imagemGaleriaFile) {
+        alert('Por favor, selecione uma imagem.');
+        return;
+    }
+    setIsSubmitting(true);
+    const result = await createImagemGaleria(newImagemData, imagemGaleriaFile);
+    if (result) {
+        alert('Imagem adicionada com sucesso!');
+        setIsGaleriaModalOpen(false);
+        setNewImagemData({ titulo: '', descricao: '', album: 'Geral' });
+        setImagemGaleriaFile(null);
+        loadImagensGaleria();
+    } else {
+        alert('Falha ao adicionar imagem. Tente novamente.');
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleImagemGaleriaDelete = async (id: string, url_imagem: string) => {
+    if (window.confirm('Tem certeza que deseja excluir esta imagem?')) {
+        const success = await deleteImagemGaleria(id, url_imagem);
+        if (success) {
+            alert('Imagem excluída com sucesso!');
+            loadImagensGaleria();
+        } else {
+            alert('Falha ao excluir a imagem.');
+        }
+    }
+  };
+
+
   const TabButton: React.FC<{tabName: string; icon: React.ReactNode; children: React.ReactNode}> = ({tabName, icon, children}) => (
     <button onClick={() => setActiveTab(tabName)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${activeTab === tabName ? 'bg-brandLime text-brandGreen-dark' : 'text-gray-600 hover:bg-gray-200'}`}>
       {icon}
@@ -182,9 +291,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
       case 'comunicados': return <ComunicadosContent />;
       case 'eventos': return <EventosContent />;
       case 'faq': return <FaqContent />;
-      case 'galeria':
-      case 'documentos':
-        return <PlaceholderContent />;
+      case 'galeria': return <GaleriaContent />;
+      case 'documentos': return <DocumentosContent />;
       default: return null;
     }
   };
@@ -258,12 +366,67 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
     </div>
   );
 
-  const PlaceholderContent = () => (
-    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-lg">
-      <h3 className="font-bold text-yellow-800">Em Desenvolvimento</h3>
-      <p className="text-yellow-700 mt-1">A funcionalidade para gerenciar "{activeTab}" está sendo construída e estará disponível em breve!</p>
+  const DocumentosContent = () => (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Gerenciar Documentos</h2>
+        <button onClick={() => setIsDocumentoModalOpen(true)} className="bg-brandGreen text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow-md">
+          <PlusCircle size={20} /> Adicionar Documento
+        </button>
+      </div>
+      <div className="space-y-4">
+        {loadingDocumentos ? (
+          Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
+        ) : documentos.map(doc => (
+          <div key={doc.id} className="bg-gray-50 p-4 rounded-lg flex justify-between items-center border">
+            <div className="flex items-center gap-4">
+              <FileText className="text-brandGreen h-8 w-8 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-gray-800">{doc.titulo}</p>
+                <p className="text-sm text-gray-500">{doc.categoria}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <a href={doc.url_arquivo} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                <UploadCloud size={20}/>
+              </a>
+              <button onClick={() => handleDocumentoDelete(doc.id, doc.url_arquivo)} className="text-red-600 hover:text-red-800">
+                <Trash2 size={20}/>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
+
+  const GaleriaContent = () => (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Gerenciar Galeria</h2>
+        <button onClick={() => setIsGaleriaModalOpen(true)} className="bg-brandGreen text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow-md">
+          <PlusCircle size={20} /> Adicionar Imagem
+        </button>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {loadingGaleria ? (
+          Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-40 w-full" />)
+        ) : imagensGaleria.map(img => (
+          <div key={img.id} className="relative group bg-gray-100 rounded-lg overflow-hidden">
+            <img src={img.url_imagem} alt={img.titulo} className="h-40 w-full object-cover" />
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+              <p className="text-white font-bold text-sm line-clamp-1">{img.titulo}</p>
+              <p className="text-gray-300 text-xs line-clamp-1">{img.album}</p>
+            </div>
+            <button onClick={() => handleImagemGaleriaDelete(img.id, img.url_imagem)} className="absolute top-2 right-2 bg-red-600/80 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700">
+              <Trash2 size={16}/>
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
 
   return (
     <div className="bg-gray-100 min-h-[calc(100vh-148px)]">
@@ -357,6 +520,67 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
             <button type="button" onClick={() => setIsEventoModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors">Cancelar</button>
             <button type="submit" disabled={isSubmitting} className="bg-brandGreen text-white px-4 py-2 rounded-md hover:bg-brandGreen-dark transition-colors disabled:bg-gray-400">
               {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal para criar Documento */}
+      <Modal isOpen={isDocumentoModalOpen} onClose={() => setIsDocumentoModalOpen(false)} title="Adicionar Novo Documento">
+        <form onSubmit={handleDocumentoSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="doc-titulo" className="block text-sm font-medium text-gray-700">Título</label>
+            <input type="text" id="doc-titulo" required value={newDocumentoData.titulo} onChange={(e) => setNewDocumentoData({...newDocumentoData, titulo: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen" />
+          </div>
+          <div>
+            <label htmlFor="doc-descricao" className="block text-sm font-medium text-gray-700">Descrição (Opcional)</label>
+            <textarea id="doc-descricao" rows={3} value={newDocumentoData.descricao || ''} onChange={(e) => setNewDocumentoData({...newDocumentoData, descricao: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen"></textarea>
+          </div>
+          <div>
+            <label htmlFor="doc-categoria" className="block text-sm font-medium text-gray-700">Categoria</label>
+            <select id="doc-categoria" value={newDocumentoData.categoria} onChange={(e) => setNewDocumentoData({...newDocumentoData, categoria: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen">
+              <option>Atas</option>
+              <option>Regulamentos</option>
+              <option>Financeiro</option>
+              <option>Outros</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="doc-file" className="block text-sm font-medium text-gray-700">Arquivo</label>
+            <input type="file" id="doc-file" required onChange={(e) => setDocumentoFile(e.target.files ? e.target.files[0] : null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
+          </div>
+           <div className="pt-4 flex justify-end gap-3">
+            <button type="button" onClick={() => setIsDocumentoModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">Cancelar</button>
+            <button type="submit" disabled={isSubmitting} className="bg-brandGreen text-white px-4 py-2 rounded-md hover:bg-brandGreen-dark disabled:bg-gray-400">
+              {isSubmitting ? 'Enviando...' : 'Salvar Documento'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal para adicionar Imagem na Galeria */}
+      <Modal isOpen={isGaleriaModalOpen} onClose={() => setIsGaleriaModalOpen(false)} title="Adicionar Imagem à Galeria">
+        <form onSubmit={handleImagemGaleriaSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="img-titulo" className="block text-sm font-medium text-gray-700">Título</label>
+            <input type="text" id="img-titulo" required value={newImagemData.titulo} onChange={(e) => setNewImagemData({...newImagemData, titulo: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen" />
+          </div>
+          <div>
+            <label htmlFor="img-descricao" className="block text-sm font-medium text-gray-700">Descrição (Opcional)</label>
+            <textarea id="img-descricao" rows={3} value={newImagemData.descricao || ''} onChange={(e) => setNewImagemData({...newImagemData, descricao: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen"></textarea>
+          </div>
+          <div>
+            <label htmlFor="img-album" className="block text-sm font-medium text-gray-700">Álbum</label>
+            <input type="text" id="img-album" required value={newImagemData.album} onChange={(e) => setNewImagemData({...newImagemData, album: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen" placeholder="Ex: Festa Junina 2024" />
+          </div>
+          <div>
+            <label htmlFor="img-file" className="block text-sm font-medium text-gray-700">Arquivo de Imagem</label>
+            <input type="file" id="img-file" accept="image/*" required onChange={(e) => setImagemGaleriaFile(e.target.files ? e.target.files[0] : null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
+          </div>
+          <div className="pt-4 flex justify-end gap-3">
+            <button type="button" onClick={() => setIsGaleriaModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">Cancelar</button>
+            <button type="submit" disabled={isSubmitting} className="bg-brandGreen text-white px-4 py-2 rounded-md hover:bg-brandGreen-dark disabled:bg-gray-400">
+              {isSubmitting ? 'Enviando...' : 'Salvar Imagem'}
             </button>
           </div>
         </form>
