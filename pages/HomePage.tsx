@@ -55,7 +55,7 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
   return (
     <div className="bg-gray-50">
       {/* Hero Section */}
-      <section className="relative text-white text-left py-24 md:py-40 bg-cover bg-center" style={{ backgroundImage: `url('/assets/hero-background.png')` }}>
+      <section className="relative text-white text-left py-24 md:py-40 bg-cover bg-center" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1920&auto=format&fit=crop')` }}>
         <div className="absolute inset-0 bg-brandGreen-dark opacity-70"></div>
         <div className="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl">

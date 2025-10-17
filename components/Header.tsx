@@ -43,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage, currentPage }) => {
   ];
 
   return (
-    <header className="relative bg-cover bg-center sticky top-0 z-50" style={{ backgroundImage: "url('/assets/header-bg.jpg')" }}>
+    <header className="relative bg-cover bg-center sticky top-0 z-50" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?q=80&w=1920&auto=format&fit=crop')" }}>
       {/* IMPROVEMENT: Changed the solid overlay to a gradient for better aesthetics and readability of the navigation bar. */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(42, 60, 51, 0.8) 0%, rgba(42, 60, 51, 0.3) 100%)' }}></div>
       <div className="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">

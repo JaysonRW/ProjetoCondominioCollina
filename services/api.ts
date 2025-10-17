@@ -8,7 +8,7 @@ import { Anunciante, Categoria, Comunicado, Cupom, Faq, Evento, Documento, Galer
 export const getComunicados = async (options: { limit?: number; isAdmin?: boolean } = {}): Promise<Comunicado[]> => {
   const { limit, isAdmin = false } = options;
   let query = supabase
-    .from('comunicados')
+    .from('comunicado')
     .select('*')
     .order('data_publicacao', { ascending: false });
 
@@ -22,7 +22,7 @@ export const getComunicados = async (options: { limit?: number; isAdmin?: boolea
 
   const { data, error } = await query;
   if (error) {
-    console.error('Error fetching comunicados:', error);
+    console.error('Error fetching comunicados:', error.message || error);
     return [];
   }
   return data as Comunicado[];
@@ -41,7 +41,7 @@ export const createComunicado = async (
       .upload(filePath, imageFile);
 
     if (uploadError) {
-      console.error('Error uploading image:', uploadError);
+      console.error('Error uploading image:', uploadError.message || uploadError);
     } else {
         const { data: urlData } = supabase.storage
           .from('comunicados-imagens')
@@ -52,13 +52,13 @@ export const createComunicado = async (
 
   const dataToInsert = { ...comunicadoData, imagem_url: imageUrl };
   const { data, error } = await supabase
-    .from('comunicados')
+    .from('comunicado')
     .insert([dataToInsert])
     .select()
     .single();
 
   if (error) {
-    console.error('Error creating comunicado:', error);
+    console.error('Error creating comunicado:', error.message || error);
     return null;
   }
   return data as Comunicado;
@@ -78,7 +78,7 @@ export const updateComunicado = async (
       .upload(filePath, imageFile);
 
     if (uploadError) {
-      console.error('Error uploading new comunicado image:', uploadError);
+      console.error('Error uploading new comunicado image:', uploadError.message || uploadError);
     } else {
       const { data: urlData } = supabase.storage
         .from('comunicados-imagens')
@@ -89,14 +89,14 @@ export const updateComunicado = async (
 
   const dataToUpdate = { ...comunicadoData, imagem_url: imageUrl };
   const { data, error } = await supabase
-    .from('comunicados')
+    .from('comunicado')
     .update(dataToUpdate)
     .eq('id', id)
     .select()
     .single();
 
   if (error) {
-    console.error('Error updating comunicado:', error);
+    console.error('Error updating comunicado:', error.message || error);
     return null;
   }
   return data as Comunicado;
@@ -110,13 +110,13 @@ export const deleteComunicado = async (id: string, imagem_url?: string): Promise
       .remove([filePath]);
       
     if (storageError) {
-        console.error('Error deleting image from storage:', storageError);
+        console.error('Error deleting image from storage:', storageError.message || storageError);
     }
   }
 
-  const { error } = await supabase.from('comunicados').delete().eq('id', id);
+  const { error } = await supabase.from('comunicado').delete().eq('id', id);
   if (error) {
-    console.error('Error deleting comunicado:', error);
+    console.error('Error deleting comunicado:', error.message || error);
     return false;
   }
   return true;
@@ -129,13 +129,13 @@ export const deleteComunicado = async (id: string, imagem_url?: string): Promise
 
 export const getCategorias = async (): Promise<Categoria[]> => {
     const { data, error } = await supabase
-      .from('categorias_anunciantes')
+      .from('categoria_anunciante')
       .select('*')
       .eq('ativo', true)
       .order('ordem', { ascending: true });
   
     if (error) {
-      console.error('Error fetching categorias:', error);
+      console.error('Error fetching categorias:', error.message || error);
       return [];
     }
     return data as Categoria[];
@@ -143,14 +143,14 @@ export const getCategorias = async (): Promise<Categoria[]> => {
 
 export const getAnunciantes = async (): Promise<Anunciante[]> => {
     const { data, error } = await supabase
-        .from('anunciantes')
-        .select(`*, cupons_desconto(*), categorias_anunciantes(*)`)
+        .from('anunciante')
+        .select(`*, cupom_desconto(*), categoria_anunciante(*)`)
         .eq('ativo', true)
         .order('destaque', { ascending: false })
         .order('ordem_exibicao', { ascending: true });
 
     if (error) {
-        console.error('Error fetching anunciantes:', error);
+        console.error('Error fetching anunciantes:', error.message || error);
         return [];
     }
     return data as Anunciante[];
@@ -158,12 +158,12 @@ export const getAnunciantes = async (): Promise<Anunciante[]> => {
 
 export const trackAnuncianteView = async (id: string): Promise<void> => {
   const { error } = await supabase.rpc('increment_anunciante_view', { anunciante_id_param: id });
-  if (error) console.error('Error tracking view:', error);
+  if (error) console.error('Error tracking view:', error.message || error);
 };
 
 export const trackAnuncianteClick = async (id: string): Promise<void> => {
   const { error } = await supabase.rpc('increment_anunciante_click', { anunciante_id_param: id });
-  if (error) console.error('Error tracking click:', error);
+  if (error) console.error('Error tracking click:', error.message || error);
 };
 
 // ==================
@@ -179,7 +179,7 @@ export const getFaqs = async (isAdmin: boolean = false): Promise<Faq[]> => {
 
   const { data, error } = await query;
   if (error) {
-    console.error('Error fetching FAQs:', error);
+    console.error('Error fetching FAQs:', error.message || error);
     return [];
   }
   return data as Faq[];
@@ -193,7 +193,7 @@ export const createFaq = async (faqData: Omit<Faq, 'id' | 'ativo'>): Promise<Faq
     .single();
 
   if (error) {
-    console.error('Error creating FAQ:', error);
+    console.error('Error creating FAQ:', error.message || error);
     return null;
   }
   return data;
@@ -208,7 +208,7 @@ export const updateFaq = async (id: string, faqData: Partial<Omit<Faq, 'id'>>): 
     .single();
   
   if (error) {
-    console.error('Error updating FAQ:', error);
+    console.error('Error updating FAQ:', error.message || error);
     return null;
   }
   return data;
@@ -221,7 +221,7 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
     .eq('id', id);
 
   if (error) {
-    console.error('Error deleting FAQ:', error);
+    console.error('Error deleting FAQ:', error.message || error);
     return false;
   }
   return true;
@@ -232,13 +232,13 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 // ==================
 
 export const getEventos = async (isAdmin: boolean = false): Promise<Evento[]> => {
-    let query = supabase.from('eventos').select('*').order('data_evento', { ascending: false });
+    let query = supabase.from('evento').select('*').order('data_evento', { ascending: false });
     if (!isAdmin) {
       query = query.eq('ativo', true);
     }
     const { data, error } = await query;
     if (error) {
-      console.error('Error fetching eventos:', error);
+      console.error('Error fetching eventos:', error.message || error);
       return [];
     }
     return data as Evento[];
@@ -257,7 +257,7 @@ export const createEvento = async (
       .upload(filePath, imageFile);
 
     if (uploadError) {
-      console.error('Error uploading event image:', uploadError);
+      console.error('Error uploading event image:', uploadError.message || uploadError);
     } else {
       const { data: urlData } = supabase.storage
         .from('eventos-imagens')
@@ -268,13 +268,13 @@ export const createEvento = async (
 
   const dataToInsert = { ...eventoData, imagem_url: imageUrl, ativo: true };
   const { data, error } = await supabase
-    .from('eventos')
+    .from('evento')
     .insert([dataToInsert])
     .select()
     .single();
 
   if (error) {
-    console.error('Error creating evento:', error);
+    console.error('Error creating evento:', error.message || error);
     return null;
   }
   return data as Evento;
@@ -294,7 +294,7 @@ export const updateEvento = async (
       .upload(filePath, imageFile);
 
     if (uploadError) {
-      console.error('Error uploading new event image:', uploadError);
+      console.error('Error uploading new event image:', uploadError.message || uploadError);
     } else {
       const { data: urlData } = supabase.storage
         .from('eventos-imagens')
@@ -305,23 +305,23 @@ export const updateEvento = async (
 
   const dataToUpdate = { ...eventoData, imagem_url: imageUrl };
   const { data, error } = await supabase
-    .from('eventos')
+    .from('evento')
     .update(dataToUpdate)
     .eq('id', id)
     .select()
     .single();
 
   if (error) {
-    console.error('Error updating evento:', error);
+    console.error('Error updating evento:', error.message || error);
     return null;
   }
   return data as Evento;
 };
 
 export const deleteEvento = async (id: string): Promise<boolean> => {
-  const { error } = await supabase.from('eventos').delete().eq('id', id);
+  const { error } = await supabase.from('evento').delete().eq('id', id);
   if (error) {
-    console.error('Error deleting evento:', error);
+    console.error('Error deleting evento:', error.message || error);
     return false;
   }
   return true;
@@ -341,7 +341,7 @@ export const getEventosPaginados = async (options: {
   const todayISOString = today.toISOString();
 
   let query = supabase
-    .from('eventos')
+    .from('evento')
     .select('*', { count: 'exact' })
     .eq('ativo', true);
 
@@ -358,7 +358,7 @@ export const getEventosPaginados = async (options: {
   const { data, error, count } = await query.range(from, to);
 
   if (error) {
-    console.error('Error fetching paginated eventos:', error);
+    console.error('Error fetching paginated eventos:', error.message || error);
     return { data: [], count: 0 };
   }
 
@@ -372,11 +372,11 @@ export const getEventosPaginados = async (options: {
 
 export const getDocumentos = async (): Promise<Documento[]> => {
   const { data, error } = await supabase
-    .from('documentos')
+    .from('documento')
     .select('*')
     .order('data_upload', { ascending: false });
   if (error) {
-    console.error('Error fetching documentos:', error);
+    console.error('Error fetching documentos:', error.message || error);
     return [];
   }
   return data as Documento[];
@@ -392,7 +392,7 @@ export const createDocumento = async (
     .upload(filePath, file);
 
   if (uploadError) {
-    console.error('Error uploading document file:', uploadError);
+    console.error('Error uploading document file:', uploadError.message || uploadError);
     return null;
   }
 
@@ -403,13 +403,13 @@ export const createDocumento = async (
 
   const dataToInsert = { ...documentoData, url_arquivo: fileUrl };
   const { data, error } = await supabase
-    .from('documentos')
+    .from('documento')
     .insert([dataToInsert])
     .select()
     .single();
 
   if (error) {
-    console.error('Error creating documento:', error);
+    console.error('Error creating documento:', error.message || error);
     return null;
   }
   return data as Documento;
@@ -423,14 +423,14 @@ export const deleteDocumento = async (id: string, url_arquivo: string): Promise<
     .remove([filePath]);
 
   if (storageError) {
-    console.error('Error deleting document file from storage:', storageError);
+    console.error('Error deleting document file from storage:', storageError.message || storageError);
     // Don't block DB deletion if storage fails, but log it.
   }
 
   // Then, delete the record from the database
-  const { error } = await supabase.from('documentos').delete().eq('id', id);
+  const { error } = await supabase.from('documento').delete().eq('id', id);
   if (error) {
-    console.error('Error deleting documento record:', error);
+    console.error('Error deleting documento record:', error.message || error);
     return false;
   }
   return true;
@@ -442,11 +442,11 @@ export const deleteDocumento = async (id: string, url_arquivo: string): Promise<
 
 export const getImagensGaleria = async (): Promise<GaleriaImagem[]> => {
     const { data, error } = await supabase
-      .from('galeria_imagens')
+      .from('galeria_imagem')
       .select('*')
       .order('data_upload', { ascending: false });
     if (error) {
-      console.error('Error fetching galeria imagens:', error);
+      console.error('Error fetching galeria imagens:', error.message || error);
       return [];
     }
     return data as GaleriaImagem[];
@@ -462,7 +462,7 @@ export const createImagemGaleria = async (
     .upload(filePath, imageFile);
 
   if (uploadError) {
-    console.error('Error uploading galeria image:', uploadError);
+    console.error('Error uploading galeria image:', uploadError.message || uploadError);
     return null;
   }
 
@@ -473,13 +473,13 @@ export const createImagemGaleria = async (
 
   const dataToInsert = { ...imagemData, url_imagem: imageUrl };
   const { data, error } = await supabase
-    .from('galeria_imagens')
+    .from('galeria_imagem')
     .insert([dataToInsert])
     .select()
     .single();
 
   if (error) {
-    console.error('Error creating galeria imagem:', error);
+    console.error('Error creating galeria imagem:', error.message || error);
     return null;
   }
   return data as GaleriaImagem;
@@ -492,12 +492,12 @@ export const deleteImagemGaleria = async (id: string, url_imagem: string): Promi
     .remove([filePath]);
 
   if (storageError) {
-    console.error('Error deleting image from storage:', storageError);
+    console.error('Error deleting image from storage:', storageError.message || storageError);
   }
 
-  const { error } = await supabase.from('galeria_imagens').delete().eq('id', id);
+  const { error } = await supabase.from('galeria_imagem').delete().eq('id', id);
   if (error) {
-    console.error('Error deleting galeria imagem record:', error);
+    console.error('Error deleting galeria imagem record:', error.message || error);
     return false;
   }
   return true;
