@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { PlusCircle, Search } from 'lucide-react';
-import Modal from '../../Modal';
-import AnuncianteForm from './AnuncianteForm';
 import AnuncianteAdminCard from './AnuncianteAdminCard';
 import { Anunciante } from '../../../types/types';
 import { getAdminAnunciantes, deleteAnunciante } from '../../../services/api';
 import Skeleton from '../../Skeleton';
 
-const AnunciantesClube: React.FC = () => {
+interface AnunciantesClubeProps {
+  refreshKey: number;
+  onEditAnunciante: (anunciante: Anunciante) => void;
+  onCreateAnunciante: () => void;
+}
+
+const AnunciantesClube: React.FC<AnunciantesClubeProps> = ({ refreshKey, onEditAnunciante, onCreateAnunciante }) => {
   const [anunciantes, setAnunciantes] = useState<Anunciante[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAnunciante, setEditingAnunciante] = useState<Anunciante | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos'); // todos, ativos, inativos
   const [planoFilter, setPlanoFilter] = useState('todos'); // todos, bronze, prata, ouro
@@ -25,7 +27,7 @@ const AnunciantesClube: React.FC = () => {
 
   useEffect(() => {
     loadAnunciantes();
-  }, [loadAnunciantes]);
+  }, [loadAnunciantes, refreshKey]);
 
   const filteredAnunciantes = useMemo(() => {
     return anunciantes.filter(anunciante => {
@@ -36,16 +38,6 @@ const AnunciantesClube: React.FC = () => {
     });
   }, [anunciantes, searchTerm, statusFilter, planoFilter]);
 
-  const handleEdit = (anunciante: Anunciante) => {
-    setEditingAnunciante(anunciante);
-    setIsModalOpen(true);
-  };
-  
-  const handleCreate = () => {
-    setEditingAnunciante(null);
-    setIsModalOpen(true);
-  };
-  
   const handleDelete = async (anunciante: Anunciante) => {
     if (window.confirm(`Tem certeza que deseja excluir o anunciante "${anunciante.nome_empresa}"?`)) {
       const success = await deleteAnunciante(anunciante.id, anunciante.logo_url, anunciante.banner_url);
@@ -56,11 +48,6 @@ const AnunciantesClube: React.FC = () => {
         alert('Falha ao excluir anunciante.');
       }
     }
-  };
-
-  const handleSuccess = () => {
-    setIsModalOpen(false);
-    loadAnunciantes();
   };
   
   const FilterButton: React.FC<{ value: string, currentFilter: string, setFilter: (val: string) => void, children: React.ReactNode }> = ({ value, currentFilter, setFilter, children }) => (
@@ -76,7 +63,7 @@ const AnunciantesClube: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Gerenciar Anunciantes</h2>
-        <button onClick={handleCreate} className="bg-brandGreen text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow">
+        <button onClick={onCreateAnunciante} className="bg-brandGreen text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow">
           <PlusCircle size={20} /> Adicionar
         </button>
       </div>
@@ -105,23 +92,11 @@ const AnunciantesClube: React.FC = () => {
         {loading ? (
             <Skeleton className="h-24 w-full" />
         ) : filteredAnunciantes.length > 0 ? filteredAnunciantes.map(anunciante => (
-          <AnuncianteAdminCard key={anunciante.id} anunciante={anunciante} onEdit={handleEdit} onDelete={handleDelete} />
+          <AnuncianteAdminCard key={anunciante.id} anunciante={anunciante} onEdit={onEditAnunciante} onDelete={handleDelete} />
         )) : (
           <p className="text-gray-500 text-center py-8">Nenhum anunciante encontrado com os filtros aplicados.</p>
         )}
       </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editingAnunciante ? 'Editar Anunciante' : 'Novo Anunciante'}
-      >
-        <AnuncianteForm 
-            anunciante={editingAnunciante} 
-            onSuccess={handleSuccess}
-            onCancel={() => setIsModalOpen(false)}
-        />
-      </Modal>
     </div>
   );
 };

@@ -4,7 +4,15 @@ import PagamentosPendentes from './PagamentosPendentes';
 import PerformanceAnunciantes from './PerformanceAnunciantes';
 import { PlusCircle } from 'lucide-react';
 
-const DashboardClube: React.FC = () => {
+interface DashboardClubeProps {
+  onNewAnuncianteClick: () => void;
+}
+
+const DashboardClube: React.FC<DashboardClubeProps> = ({ onNewAnuncianteClick }) => {
+  const handleGenerateReport = () => {
+    alert('A funcionalidade de gerar relatório mensal será implementada em breve.');
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -24,10 +32,16 @@ const DashboardClube: React.FC = () => {
       <div>
         <h3 className="text-xl font-bold text-gray-800 mb-4">Ações Rápidas</h3>
         <div className="flex flex-wrap gap-4">
-            <button className="bg-brandGreen text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow-md">
+            <button 
+              onClick={onNewAnuncianteClick}
+              className="bg-brandGreen text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow-md"
+            >
                 <PlusCircle size={20} /> Novo Anunciante
             </button>
-            <button className="bg-gray-200 text-gray-700 font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-300 transition-colors">
+            <button 
+              onClick={handleGenerateReport}
+              className="bg-gray-200 text-gray-700 font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-300 transition-colors"
+            >
                 Gerar Relatório Mensal
             </button>
         </div>

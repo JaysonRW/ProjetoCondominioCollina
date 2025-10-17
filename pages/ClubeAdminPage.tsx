@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { LogOut, LayoutDashboard, Store } from 'lucide-react';
 import DashboardClube from '../components/admin/clube/DashboardClube';
 import AnunciantesClube from '../components/admin/clube/AnunciantesClube';
+import Modal from '../components/Modal';
+import AnuncianteForm from '../components/admin/clube/AnuncianteForm';
+import { Anunciante } from '../types/types';
 
 interface ClubeAdminPageProps {
   onLogout: () => void;
@@ -9,6 +12,28 @@ interface ClubeAdminPageProps {
 
 const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAnunciante, setEditingAnunciante] = useState<Anunciante | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleOpenCreateModal = () => {
+    setEditingAnunciante(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (anunciante: Anunciante) => {
+    setEditingAnunciante(anunciante);
+    setIsModalOpen(true);
+  };
+
+  const handleModalSuccess = () => {
+    setIsModalOpen(false);
+    setRefreshKey(prev => prev + 1); // Trigger a refresh in the advertisers list
+  };
+  
+  const handleModalClose = () => {
+      setIsModalOpen(false);
+  };
 
   const TabButton: React.FC<{tabName: string; icon: React.ReactNode; children: React.ReactNode}> = ({tabName, icon, children}) => (
     <button onClick={() => setActiveTab(tabName)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${activeTab === tabName ? 'bg-brandLime text-brandGreen-dark' : 'text-gray-600 hover:bg-gray-200'}`}>
@@ -20,9 +45,9 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
   const renderContent = () => {
     switch(activeTab) {
         case 'dashboard':
-            return <DashboardClube />;
+            return <DashboardClube onNewAnuncianteClick={handleOpenCreateModal} />;
         case 'anunciantes':
-            return <AnunciantesClube />;
+            return <AnunciantesClube refreshKey={refreshKey} onEditAnunciante={handleOpenEditModal} onCreateAnunciante={handleOpenCreateModal} />;
         default:
             return null;
     }
@@ -56,6 +81,18 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
             </main>
         </div>
       </div>
+      
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        title={editingAnunciante ? 'Editar Anunciante' : 'Novo Anunciante'}
+      >
+        <AnuncianteForm 
+            anunciante={editingAnunciante} 
+            onSuccess={handleModalSuccess}
+            onCancel={handleModalClose}
+        />
+      </Modal>
     </div>
   );
 };
