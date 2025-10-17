@@ -10,6 +10,7 @@ import AdminPage from './pages/AdminPage';
 import FaqPage from './pages/FaqPage';
 import EventosPage from './pages/EventosPage';
 import GaleriaPage from './pages/GaleriaPage';
+import DocumentosPage from './pages/DocumentosPage';
 
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
     <div className="flex items-center justify-center h-96">
@@ -65,7 +66,7 @@ const App: React.FC = () => {
     switch (currentPage) {
       case 'comunicados': return <ComunicadosPage />;
       case 'parceiros': return <ParceirosPage />;
-      case 'documentos': return <PlaceholderPage title="Documentos" />;
+      case 'documentos': return <DocumentosPage />;
       case 'galeria': return <GaleriaPage />;
       case 'eventos': return <EventosPage />;
       case 'faq': return <FaqPage />;
