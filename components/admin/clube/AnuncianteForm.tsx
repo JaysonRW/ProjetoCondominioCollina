@@ -75,6 +75,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+      {/* Informações Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="nome_empresa" className="block font-medium text-gray-700">Nome da Empresa</label>
@@ -83,6 +84,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
         <div>
             <label htmlFor="categoria_id" className="block font-medium text-gray-700">Categoria</label>
             <select name="categoria_id" id="categoria_id" value={formData.categoria_id} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required>
+                <option value="" disabled>Selecione...</option>
                 {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
             </select>
         </div>
@@ -91,43 +93,79 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
         <label htmlFor="descricao" className="block font-medium text-gray-700">Descrição</label>
         <textarea name="descricao" id="descricao" rows={3} value={formData.descricao} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen"></textarea>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      {/* Informações de Contato */}
+      <div className="pt-4 border-t">
+        <h3 className="text-md font-semibold text-gray-800 mb-2">Informações de Contato</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="telefone" className="block font-medium text-gray-700">Telefone</label>
+              <input type="tel" name="telefone" id="telefone" value={formData.telefone || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
+            </div>
+            <div>
+              <label htmlFor="whatsapp" className="block font-medium text-gray-700">WhatsApp</label>
+              <input type="tel" name="whatsapp" id="whatsapp" value={formData.whatsapp || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" placeholder="Ex: 5511999998888" />
+            </div>
+            <div>
+              <label htmlFor="site_url" className="block font-medium text-gray-700">Website</label>
+              <input type="url" name="site_url" id="site_url" value={formData.site_url || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" placeholder="https://..." />
+            </div>
+            <div>
+              <label htmlFor="instagram" className="block font-medium text-gray-700">Instagram</label>
+              <input type="text" name="instagram" id="instagram" value={formData.instagram || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" placeholder="usuario_sem_@" />
+            </div>
+        </div>
         <div>
-          <label htmlFor="plano" className="block font-medium text-gray-700">Plano</label>
-          <select name="plano" id="plano" value={formData.plano} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen">
-            <option value="bronze">Bronze</option>
-            <option value="prata">Prata</option>
-            <option value="ouro">Ouro</option>
-          </select>
+          <label htmlFor="endereco" className="block font-medium text-gray-700 mt-4">Endereço</label>
+          <input type="text" name="endereco" id="endereco" value={formData.endereco || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
         </div>
-         <div>
-          <label htmlFor="valor_mensal" className="block font-medium text-gray-700">Valor Mensal (R$)</label>
-          <input type="number" name="valor_mensal" id="valor_mensal" value={formData.valor_mensal} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
-        </div>
-        <div>
-          <label htmlFor="dia_vencimento" className="block font-medium text-gray-700">Dia Vencimento</label>
-          <input type="number" name="dia_vencimento" id="dia_vencimento" min="1" max="31" value={formData.dia_vencimento} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label htmlFor="logoFile" className="block font-medium text-gray-700">Logo</label>
-            <input type="file" name="logoFile" id="logoFile" onChange={e => setLogoFile(e.target.files?.[0] || null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
-        </div>
-        <div>
-            <label htmlFor="bannerFile" className="block font-medium text-gray-700">Banner</label>
-            <input type="file" name="bannerFile" id="bannerFile" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
-        </div>
-      </div>
-      <div>
-        <label className="flex items-center gap-2">
-            <input type="checkbox" name="ativo" checked={formData.ativo} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
-            <span className="font-medium text-gray-700">Anunciante Ativo</span>
-        </label>
       </div>
 
-      {/* FIX: Removed invalid <style jsx> tag which was causing a TypeScript error. Replaced with Tailwind CSS classes directly on the elements. */}
-
+      {/* Informações do Plano e Financeiro */}
+      <div className="pt-4 border-t">
+         <h3 className="text-md font-semibold text-gray-800 mb-2">Plano e Financeiro</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="plano" className="block font-medium text-gray-700">Plano</label>
+              <select name="plano" id="plano" value={formData.plano} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen">
+                <option value="bronze">Bronze</option>
+                <option value="prata">Prata</option>
+                <option value="ouro">Ouro</option>
+              </select>
+            </div>
+             <div>
+              <label htmlFor="valor_mensal" className="block font-medium text-gray-700">Valor Mensal (R$)</label>
+              <input type="number" name="valor_mensal" id="valor_mensal" value={formData.valor_mensal} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
+            </div>
+            <div>
+              <label htmlFor="dia_vencimento" className="block font-medium text-gray-700">Dia Vencimento</label>
+              <input type="number" name="dia_vencimento" id="dia_vencimento" min="1" max="31" value={formData.dia_vencimento} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
+            </div>
+          </div>
+      </div>
+      
+      {/* Imagens e Status */}
+      <div className="pt-4 border-t">
+        <h3 className="text-md font-semibold text-gray-800 mb-2">Mídia e Status</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label htmlFor="logoFile" className="block font-medium text-gray-700">Logo</label>
+                <input type="file" name="logoFile" id="logoFile" accept="image/*" onChange={e => setLogoFile(e.target.files?.[0] || null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
+            </div>
+            <div>
+                <label htmlFor="bannerFile" className="block font-medium text-gray-700">Banner</label>
+                <input type="file" name="bannerFile" id="bannerFile" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
+            </div>
+        </div>
+        <div className="mt-4">
+            <label className="flex items-center gap-2">
+                <input type="checkbox" name="ativo" checked={formData.ativo} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
+                <span className="font-medium text-gray-700">Anunciante Ativo</span>
+            </label>
+        </div>
+      </div>
+      
+      {/* Botões */}
       <div className="pt-4 flex justify-end gap-3">
         <button type="button" onClick={onCancel} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">
           Cancelar
