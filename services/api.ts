@@ -1,6 +1,9 @@
-
 import { supabase } from './supabase';
-import { Anunciante, Categoria, Comunicado, Cupom } from '../types/types';
+import { Anunciante, Categoria, Comunicado, Cupom, Faq } from '../types/types';
+
+// ==================
+// COMUNICADOS API
+// ==================
 
 export const getComunicados = async (limit?: number): Promise<Comunicado[]> => {
   let query = supabase
@@ -27,17 +30,14 @@ export const createComunicado = async (
 ): Promise<Comunicado | null> => {
   let imageUrl: string | undefined = undefined;
 
-  // 1. Upload image if it exists
   if (imageFile) {
     const filePath = `public/${Date.now()}-${imageFile.name}`;
-    
     const { error: uploadError } = await supabase.storage
       .from('comunicados-imagens')
       .upload(filePath, imageFile);
 
     if (uploadError) {
       console.error('Error uploading image:', uploadError);
-      // Don't fail the whole process, just log the error. The post will be created without an image.
     } else {
         const { data: urlData } = supabase.storage
           .from('comunicados-imagens')
@@ -46,13 +46,7 @@ export const createComunicado = async (
     }
   }
 
-  // 2. Prepare data for insertion
-  const dataToInsert = {
-    ...comunicadoData,
-    imagem_url: imageUrl,
-  };
-
-  // 3. Insert into database
+  const dataToInsert = { ...comunicadoData, imagem_url: imageUrl };
   const { data, error } = await supabase
     .from('comunicados')
     .insert([dataToInsert])
@@ -63,10 +57,13 @@ export const createComunicado = async (
     console.error('Error creating comunicado:', error);
     return null;
   }
-
   return data as Comunicado;
 };
 
+
+// ==================
+// PARCEIROS API
+// ==================
 
 export const getCategorias = async (): Promise<Categoria[]> => {
     const { data, error } = await supabase
@@ -85,11 +82,7 @@ export const getCategorias = async (): Promise<Categoria[]> => {
 export const getAnunciantes = async (): Promise<Anunciante[]> => {
     const { data, error } = await supabase
         .from('anunciantes')
-        .select(`
-            *,
-            cupons_desconto(*),
-            categorias_anunciantes(*)
-        `)
+        .select(`*, cupons_desconto(*), categorias_anunciantes(*)`)
         .eq('ativo', true)
         .order('destaque', { ascending: false })
         .order('ordem_exibicao', { ascending: true });
@@ -101,32 +94,73 @@ export const getAnunciantes = async (): Promise<Anunciante[]> => {
     return data as Anunciante[];
 };
 
-export const getAnunciantesDestaque = async (limit: number = 5): Promise<Anunciante[]> => {
-    const { data, error } = await supabase
-        .from('anunciantes')
-        .select(`*, categorias_anunciantes(*)`)
-        .eq('ativo', true)
-        .eq('destaque', true)
-        .order('ordem_exibicao', { ascending: true })
-        .limit(limit);
-    
-    if (error) {
-        console.error('Error fetching anunciantes em destaque:', error);
-        return [];
-    }
-    return data as Anunciante[];
-};
-
 export const trackAnuncianteView = async (id: string): Promise<void> => {
   const { error } = await supabase.rpc('increment_anunciante_view', { anunciante_id_param: id });
-  if (error) {
-    console.error('Error tracking view:', error);
-  }
+  if (error) console.error('Error tracking view:', error);
 };
 
 export const trackAnuncianteClick = async (id: string): Promise<void> => {
   const { error } = await supabase.rpc('increment_anunciante_click', { anunciante_id_param: id });
-  if (error) {
-    console.error('Error tracking click:', error);
+  if (error) console.error('Error tracking click:', error);
+};
+
+// ==================
+// FAQ API
+// ==================
+
+export const getFaqs = async (isAdmin: boolean = false): Promise<Faq[]> => {
+  let query = supabase.from('faq').select('*').order('ordem', { ascending: true });
+  
+  if (!isAdmin) {
+    query = query.eq('ativo', true);
   }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('Error fetching FAQs:', error);
+    return [];
+  }
+  return data as Faq[];
+};
+
+export const createFaq = async (faqData: Omit<Faq, 'id' | 'ativo'>): Promise<Faq | null> => {
+  const { data, error } = await supabase
+    .from('faq')
+    .insert([{ ...faqData, ativo: true }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating FAQ:', error);
+    return null;
+  }
+  return data;
+};
+
+export const updateFaq = async (id: string, faqData: Partial<Omit<Faq, 'id'>>): Promise<Faq | null> => {
+  const { data, error } = await supabase
+    .from('faq')
+    .update(faqData)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating FAQ:', error);
+    return null;
+  }
+  return data;
+};
+
+export const deleteFaq = async (id: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('faq')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting FAQ:', error);
+    return false;
+  }
+  return true;
 };

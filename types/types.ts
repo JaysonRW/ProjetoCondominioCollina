@@ -1,4 +1,3 @@
-
 export interface Categoria {
   id: string;
   nome: string;
@@ -48,5 +47,13 @@ export interface Comunicado {
   autor: string;
   categoria: 'urgente' | 'informativo' | 'evento' | string;
   imagem_url?: string;
+  ativo: boolean;
+}
+
+export interface Faq {
+  id: string;
+  pergunta: string;
+  resposta: string;
+  ordem: number;
   ativo: boolean;
 }
