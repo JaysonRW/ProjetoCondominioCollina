@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Anunciante, Categoria } from '../../../types/types';
-import { getCategorias, createAnunciante, updateAnunciante } from '../../../services/api';
-import { UploadCloud } from 'lucide-react';
+import { Anunciante, Categoria, Cupom } from '../../../types/types';
+import { getCategorias, createAnunciante, updateAnunciante, createCupom, deleteCupom } from '../../../services/api';
+import { Trash2 } from 'lucide-react';
 
 interface AnuncianteFormProps {
   anunciante: Anunciante | null;
@@ -10,47 +10,57 @@ interface AnuncianteFormProps {
 }
 
 const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, onCancel }) => {
-  const [formData, setFormData] = useState<Partial<Anunciante>>({
-    nome_empresa: '',
-    descricao: '',
-    descricao_curta: '',
-    plano: 'bronze',
-    valor_mensal: 200,
-    categoria_id: '',
-    endereco: '',
-    cep: '',
-    telefone: '',
-    whatsapp: '',
-    email: '',
-    site_url: '',
-    instagram: '',
-    facebook: '',
-    ativo: true,
-    destaque: false,
-    contrato_inicio: new Date().toISOString().split('T')[0],
-    contrato_duracao: 12,
-    dia_vencimento: 5,
-    renovacao_automatica: false,
-    comissao_gestor: 50,
-    ordem_exibicao: 99,
-    notas_internas: '',
-    ...anunciante
-  });
+  const [formData, setFormData] = useState<Partial<Anunciante>>({});
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [coupons, setCoupons] = useState<Partial<Cupom>[]>([]);
+  const [newCoupon, setNewCoupon] = useState({ codigo: '', descricao: '' });
+  
   useEffect(() => {
     async function loadCategorias() {
       const cats = await getCategorias();
       setCategorias(cats);
-      if (!anunciante && cats.length > 0) {
-        setFormData(prev => ({ ...prev, categoria_id: cats[0].id }));
-      }
     }
     loadCategorias();
-  }, [anunciante]);
+  }, []);
+
+  useEffect(() => {
+    const defaultData = {
+        nome_empresa: '',
+        descricao: '',
+        descricao_curta: '',
+        plano: 'bronze',
+        valor_mensal: 200,
+        categoria_id: categorias.length > 0 ? categorias[0].id : '',
+        endereco: '',
+        cep: '',
+        telefone: '',
+        whatsapp: '',
+        email: '',
+        site_url: '',
+        instagram: '',
+        facebook: '',
+        ativo: true,
+        destaque: false,
+        contrato_inicio: new Date().toISOString().split('T')[0],
+        contrato_duracao: 12,
+        dia_vencimento: 5,
+        renovacao_automatica: false,
+        comissao_gestor: 50,
+        ordem_exibicao: 99,
+        notas_internas: '',
+    };
+    
+    const dataToSet = anunciante ? { ...anunciante } : defaultData;
+    setFormData(dataToSet);
+    setCoupons(anunciante?.cupons_desconto || []);
+    setLogoFile(null);
+    setBannerFile(null);
+
+  }, [anunciante, categorias]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -59,21 +69,68 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
     setFormData({ ...formData, [name]: inputValue });
   };
   
+  const handleAddCoupon = () => {
+    if (newCoupon.codigo && newCoupon.descricao) {
+        setCoupons([...coupons, { ...newCoupon }]);
+        setNewCoupon({ codigo: '', descricao: '' });
+    } else {
+        alert('Por favor, preencha o código e a descrição do cupom.');
+    }
+  };
+
+  const handleRemoveCoupon = (indexToRemove: number) => {
+    setCoupons(coupons.filter((_, index) => index !== indexToRemove));
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.categoria_id) {
+        alert('Por favor, selecione uma categoria.');
+        return;
+    }
     setIsSubmitting(true);
     
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, categorias_anunciantes, cupons_desconto, ...submitData} = formData;
 
     try {
+      let savedAnunciante: Anunciante | null;
       if (anunciante) {
-        await updateAnunciante(anunciante.id, submitData, logoFile || undefined, bannerFile || undefined);
+        savedAnunciante = await updateAnunciante(anunciante.id, submitData, logoFile || undefined, bannerFile || undefined);
       } else {
-        await createAnunciante(submitData as any, logoFile || undefined, bannerFile || undefined);
+        savedAnunciante = await createAnunciante(submitData as any, logoFile || undefined, bannerFile || undefined);
       }
-      alert(`Anunciante ${anunciante ? 'atualizado' : 'criado'} com sucesso!`);
-      onSuccess();
+      
+      if (savedAnunciante) {
+        const originalCoupons = anunciante?.cupons_desconto || [];
+        const couponPromises = [];
+
+        // Coupons to delete
+        for (const original of originalCoupons) {
+            if (!coupons.find(c => c.id === original.id)) {
+                couponPromises.push(deleteCupom(original.id));
+            }
+        }
+
+        // Coupons to add
+        for (const newC of coupons) {
+            if (!newC.id) { // New coupons don't have an ID
+                couponPromises.push(createCupom({
+                    codigo: newC.codigo!,
+                    descricao: newC.descricao!,
+                    anunciante_id: savedAnunciante.id,
+                }));
+            }
+        }
+        
+        await Promise.all(couponPromises);
+
+        alert(`Anunciante ${anunciante ? 'atualizado' : 'criado'} com sucesso!`);
+        onSuccess();
+
+      } else {
+          throw new Error('Falha ao salvar o anunciante.');
+      }
     } catch (error) {
       alert('Ocorreu um erro ao salvar o anunciante.');
       console.error(error);
@@ -97,11 +154,11 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="nome_empresa" className="block font-medium text-gray-700">Nome da Empresa</label>
-            <input type="text" name="nome_empresa" id="nome_empresa" value={formData.nome_empresa} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
+            <input type="text" name="nome_empresa" id="nome_empresa" value={formData.nome_empresa || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
           </div>
           <div>
               <label htmlFor="categoria_id" className="block font-medium text-gray-700">Categoria</label>
-              <select name="categoria_id" id="categoria_id" value={formData.categoria_id} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required>
+              <select name="categoria_id" id="categoria_id" value={formData.categoria_id || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required>
                   <option value="" disabled>Selecione...</option>
                   {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
               </select>
@@ -113,7 +170,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
         </div>
         <div className="mt-4">
           <label htmlFor="descricao" className="block font-medium text-gray-700">Descrição Completa</label>
-          <textarea name="descricao" id="descricao" rows={3} value={formData.descricao} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen"></textarea>
+          <textarea name="descricao" id="descricao" rows={3} value={formData.descricao || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen"></textarea>
         </div>
       </div>
 
@@ -162,7 +219,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label htmlFor="plano" className="block font-medium text-gray-700">Plano</label>
-              <select name="plano" id="plano" value={formData.plano} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen">
+              <select name="plano" id="plano" value={formData.plano || 'bronze'} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen">
                 <option value="bronze">Bronze</option>
                 <option value="prata">Prata</option>
                 <option value="ouro">Ouro</option>
@@ -170,27 +227,27 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
             </div>
              <div>
               <label htmlFor="valor_mensal" className="block font-medium text-gray-700">Valor (R$)</label>
-              <input type="number" name="valor_mensal" id="valor_mensal" value={formData.valor_mensal} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
+              <input type="number" name="valor_mensal" id="valor_mensal" value={formData.valor_mensal || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
             </div>
              <div>
               <label htmlFor="comissao_gestor" className="block font-medium text-gray-700">Comissão Gestor (%)</label>
-              <input type="number" name="comissao_gestor" id="comissao_gestor" min="0" max="100" value={formData.comissao_gestor} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
+              <input type="number" name="comissao_gestor" id="comissao_gestor" min="0" max="100" value={formData.comissao_gestor || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
             </div>
             <div>
               <label htmlFor="dia_vencimento" className="block font-medium text-gray-700">Dia Venc.</label>
-              <input type="number" name="dia_vencimento" id="dia_vencimento" min="1" max="31" value={formData.dia_vencimento} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
+              <input type="number" name="dia_vencimento" id="dia_vencimento" min="1" max="31" value={formData.dia_vencimento || 1} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
             </div>
             <div>
               <label htmlFor="contrato_inicio" className="block font-medium text-gray-700">Início Contrato</label>
-              <input type="date" name="contrato_inicio" id="contrato_inicio" value={formData.contrato_inicio} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
+              <input type="date" name="contrato_inicio" id="contrato_inicio" value={formData.contrato_inicio || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
             </div>
             <div>
               <label htmlFor="contrato_duracao" className="block font-medium text-gray-700">Duração (meses)</label>
-              <input type="number" name="contrato_duracao" id="contrato_duracao" value={formData.contrato_duracao} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
+              <input type="number" name="contrato_duracao" id="contrato_duracao" value={formData.contrato_duracao || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
             </div>
             <div className="flex items-end pb-2">
               <label className="flex items-center gap-2">
-                <input type="checkbox" name="renovacao_automatica" checked={formData.renovacao_automatica} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
+                <input type="checkbox" name="renovacao_automatica" checked={formData.renovacao_automatica || false} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
                 <span className="font-medium text-gray-700">Renov. Automática</span>
               </label>
             </div>
@@ -212,19 +269,19 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div className="flex items-end pb-2">
                 <label className="flex items-center gap-2">
-                    <input type="checkbox" name="ativo" checked={formData.ativo} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
+                    <input type="checkbox" name="ativo" checked={formData.ativo || false} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
                     <span className="font-medium text-gray-700">Anunciante Ativo</span>
                 </label>
             </div>
              <div className="flex items-end pb-2">
                 <label className="flex items-center gap-2">
-                    <input type="checkbox" name="destaque" checked={formData.destaque} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
+                    <input type="checkbox" name="destaque" checked={formData.destaque || false} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
                     <span className="font-medium text-gray-700">Anunciante Destaque</span>
                 </label>
             </div>
             <div>
                 <label htmlFor="ordem_exibicao" className="block font-medium text-gray-700">Ordem de Exibição</label>
-                <input type="number" name="ordem_exibicao" id="ordem_exibicao" value={formData.ordem_exibicao} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Menor = Mais alto" />
+                <input type="number" name="ordem_exibicao" id="ordem_exibicao" value={formData.ordem_exibicao || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Menor = Mais alto" />
             </div>
         </div>
       </FormSection>
@@ -235,6 +292,36 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
           <label htmlFor="notas_internas" className="block font-medium text-gray-700">Notas Internas (visível apenas para admin)</label>
           <textarea name="notas_internas" id="notas_internas" rows={3} value={formData.notas_internas || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
         </div>
+      </FormSection>
+
+      {/* Cupons de Desconto */}
+      <FormSection title="Cupons de Desconto">
+          <div className="space-y-2">
+              {coupons.length > 0 && coupons.map((cupom, index) => (
+                  <div key={cupom.id || `new-${index}`} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
+                      <div>
+                          <p className="font-bold text-brandGreen">{cupom.codigo}</p>
+                          <p className="text-gray-600">{cupom.descricao}</p>
+                      </div>
+                      <button type="button" onClick={() => handleRemoveCoupon(index)} className="text-red-500 hover:text-red-700 p-1">
+                          <Trash2 size={16} />
+                      </button>
+                  </div>
+              ))}
+          </div>
+          <div className="flex items-end gap-2 mt-4">
+              <div className="flex-1">
+                  <label className="block font-medium text-gray-700">Código do Cupom</label>
+                  <input type="text" value={newCoupon.codigo} onChange={e => setNewCoupon(c => ({...c, codigo: e.target.value.toUpperCase()}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+              </div>
+              <div className="flex-1">
+                  <label className="block font-medium text-gray-700">Descrição</label>
+                  <input type="text" value={newCoupon.descricao} onChange={e => setNewCoupon(c => ({...c, descricao: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+              </div>
+              <button type="button" onClick={handleAddCoupon} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 h-10">
+                  Adicionar
+              </button>
+          </div>
       </FormSection>
       
       {/* Botões */}

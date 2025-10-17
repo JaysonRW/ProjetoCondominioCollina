@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Comunicado, Faq, Evento, Documento, GaleriaImagem, Anunciante, Categoria, FinanceiroClube } from '../types/types';
+import { Comunicado, Faq, Evento, Documento, GaleriaImagem, Anunciante, Categoria, FinanceiroClube, Cupom } from '../types/types';
 
 // Helper for file uploads
 const uploadFile = async (file: File, bucket: string, path: string): Promise<string | null> => {
@@ -278,7 +278,7 @@ export const trackAnuncianteClick = async (id: string) => {
 export const getAdminAnunciantes = async (): Promise<Anunciante[]> => {
     const { data, error } = await supabase
         .from('anunciantes')
-        .select('*, categorias_anunciantes(*)')
+        .select('*, categorias_anunciantes(*), cupons_desconto(*)')
         .order('nome_empresa');
     if (error) console.error('Error fetching admin anunciantes:', error);
     return (data as any) || [];
@@ -298,7 +298,7 @@ export const createAnunciante = async (anuncianteData: Omit<Anunciante, 'id' | '
     const { data, error } = await supabase
         .from('anunciantes')
         .insert([{ ...anuncianteData, logo_url, banner_url }])
-        .select()
+        .select('*, cupons_desconto(*)')
         .single();
     if (error) {
         console.error('Error creating anunciante:', error);
@@ -321,7 +321,7 @@ export const updateAnunciante = async (id: string, updates: Partial<Anunciante>,
         .from('anunciantes')
         .update(finalUpdates)
         .eq('id', id)
-        .select()
+        .select('*, cupons_desconto(*)')
         .single();
     
     if (error) {
@@ -342,6 +342,26 @@ export const deleteAnunciante = async (id: string, logoUrl?: string, bannerUrl?:
     }
     return true;
 };
+
+// Cupons API
+export const createCupom = async (cupomData: Omit<Cupom, 'id'>): Promise<Cupom | null> => {
+    const { data, error } = await supabase.from('cupons_desconto').insert([cupomData]).select().single();
+    if (error) {
+        console.error('Error creating cupom:', error);
+        return null;
+    }
+    return data;
+};
+
+export const deleteCupom = async (id: string): Promise<boolean> => {
+    const { error } = await supabase.from('cupons_desconto').delete().eq('id', id);
+    if (error) {
+        console.error('Error deleting cupom:', error);
+        return false;
+    }
+    return true;
+};
+
 
 // Financeiro Clube API
 export const getFinanceiroClube = async (): Promise<FinanceiroClube[]> => {

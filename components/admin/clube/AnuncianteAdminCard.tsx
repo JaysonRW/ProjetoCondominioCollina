@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Ticket } from 'lucide-react';
 import { Anunciante } from '../../../types/types';
 
 interface AnuncianteAdminCardProps {
@@ -32,6 +32,8 @@ const AnuncianteAdminCard: React.FC<AnuncianteAdminCardProps> = ({ anunciante, o
                     <PlanoBadge plano={anunciante.plano} />
                     <span>|</span>
                     <span>{anunciante.categorias_anunciantes?.nome || 'Sem categoria'}</span>
+                    <span>|</span>
+                    <span className="flex items-center gap-1"><Ticket size={14}/> {anunciante.cupons_desconto?.length || 0}</span>
                 </div>
             </div>
         </div>
