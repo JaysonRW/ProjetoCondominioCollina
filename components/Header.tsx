@@ -1,103 +1,94 @@
 import React, { useState } from 'react';
-import { Menu, X, UserCircle } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { logoBase64 } from '../assets/logo';
 
 interface HeaderProps {
-  setCurrentPage: (page: string) => void;
-  currentPage: string;
+    currentPage: string;
+    setCurrentPage: (page: string) => void;
+    isLoggedIn: boolean;
 }
 
-const NavLink: React.FC<{ page: string; currentPage: string; onClick: () => void; children: React.ReactNode; isButton?: boolean }> = ({ page, currentPage, onClick, children, isButton = false }) => (
-  <a
-    href={`#${page}`}
-    onClick={onClick}
-    className={isButton 
-      ? `flex items-center gap-2 bg-brandGreen text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-brandGreen-dark transition-colors`
-      : `px-3 py-2 rounded-md text-sm font-medium transition-colors text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.6)] ${
-          currentPage === page
-            ? 'font-bold text-brandLime'
-            : 'hover:text-brandLime'
-        }`
+const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, isLoggedIn }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const navItems = [
+        { key: 'home', label: 'Início' },
+        { key: 'comunicados', label: 'Comunicados' },
+        { key: 'parceiros', label: 'Clube de Vantagens' },
+        { key: 'eventos', label: 'Eventos' },
+        { key: 'galeria', label: 'Galeria' },
+        { key: 'documentos', label: 'Documentos' },
+        { key: 'faq', label: 'FAQ' },
+    ];
+    
+    if (isLoggedIn) {
+        navItems.push({ key: 'admin', label: 'Painel Admin' });
     }
-  >
-    {children}
-  </a>
-);
 
-const Header: React.FC<HeaderProps> = ({ setCurrentPage, currentPage }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const NavLink: React.FC<{ itemKey: string; label: string }> = ({ itemKey, label }) => (
+        <a
+            href={`#${itemKey}`}
+            onClick={(e) => {
+                e.preventDefault();
+                setCurrentPage(itemKey);
+                setIsMenuOpen(false);
+            }}
+            className={`font-medium transition-colors ${currentPage === itemKey ? 'text-brandLime' : 'text-white hover:text-brandLime'}`}
+        >
+            {label}
+        </a>
+    );
 
-  const handleNavClick = (page: string) => {
-    setCurrentPage(page);
-    setIsMenuOpen(false);
-  }
-  
-  const navItems = [
-    { page: 'home', label: 'Início' },
-    { page: 'comunicados', label: 'Comunicados' },
-    { page: 'parceiros', label: 'Clube de Vantagens Colina Belvedere' },
-    { page: 'documentos', label: 'Documentos' },
-    { page: 'galeria', label: 'Galeria' },
-    { page: 'eventos', label: 'Eventos' },
-    { page: 'faq', label: 'FAQ' },
-  ];
+    return (
+        <header className="bg-brandGreen-dark text-white sticky top-0 z-50 shadow-lg">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-20">
+                    {/* Logo */}
+                    <div className="flex-shrink-0">
+                        <a href="#home" onClick={() => setCurrentPage('home')} className="flex items-center gap-2">
+                             <img src={logoBase64} alt="Collina Belvedere Logo" className="h-12" />
+                        </a>
+                    </div>
 
-  return (
-    <header className="relative bg-cover bg-center sticky top-0 z-50" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?q=80&w=1920&auto=format&fit=crop')" }}>
-      {/* IMPROVEMENT: Changed the solid overlay to a gradient for better aesthetics and readability of the navigation bar. */}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(42, 60, 51, 0.8) 0%, rgba(42, 60, 51, 0.3) 100%)' }}></div>
-      <div className="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          <div className="flex-shrink-0">
-            <a href="#home" onClick={() => handleNavClick('home')} className="flex items-center">
-              <img src={logoBase64} alt="Collina Belvedere Logo" className="h-14 w-auto drop-shadow-lg" />
-            </a>
-          </div>
-
-          <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-x-6">
-            {navItems.map(item => (
-              <NavLink key={item.page} page={item.page} currentPage={currentPage} onClick={() => handleNavClick(item.page)}>{item.label}</NavLink>
-            ))}
-          </div>
-
-          <div className="hidden lg:flex lg:items-center">
-             <NavLink page="sindico" currentPage={currentPage} onClick={() => handleNavClick('sindico')} isButton>
-                <UserCircle size={20} />
-                Área do Síndico
-            </NavLink>
-          </div>
-
-          <div className="flex items-center lg:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-white/20 focus:outline-none"
-              aria-controls="mobile-menu" 
-              aria-expanded="false"
-            >
-              <span className="sr-only">Abrir menu principal</span>
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {isMenuOpen && (
-        <div className="lg:hidden absolute w-full bg-brandGreen-dark/95 backdrop-blur-sm" id="mobile-menu">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-             {navItems.map(item => (
-              <a key={item.page} href={`#${item.page}`} onClick={() => handleNavClick(item.page)} className={`block px-3 py-2 rounded-md text-base font-medium ${currentPage === item.page ? 'bg-brandLime text-brandGreen-dark' : 'text-white hover:bg-brandGreen'}`}>{item.label}</a>
-            ))}
-            <div className="px-3 pt-4 pb-2">
-                <NavLink page="sindico" currentPage={currentPage} onClick={() => handleNavClick('sindico')} isButton>
-                    <UserCircle size={20} />
-                    Área do Síndico
-                </NavLink>
+                    {/* Desktop Navigation */}
+                    <nav className="hidden md:flex md:items-center md:space-x-8">
+                        {navItems.map(item => (
+                            <NavLink key={item.key} itemKey={item.key} label={item.label} />
+                        ))}
+                    </nav>
+                    
+                    {/* Mobile Menu Button */}
+                    <div className="md:hidden">
+                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:text-brandLime">
+                            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                        </button>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      )}
-    </header>
-  );
+
+            {/* Mobile Menu */}
+            {isMenuOpen && (
+                <div className="md:hidden bg-brandGreen-dark border-t border-brandGreen">
+                    <nav className="px-2 pt-2 pb-3 space-y-1 sm:px-3 flex flex-col items-center">
+                        {navItems.map(item => (
+                            <a
+                                key={item.key}
+                                href={`#${item.key}`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage(item.key);
+                                    setIsMenuOpen(false);
+                                }}
+                                className={`block w-full text-center px-3 py-2 rounded-md text-base font-medium transition-colors ${currentPage === item.key ? 'bg-brandLime text-brandGreen-dark' : 'text-white hover:bg-brandGreen hover:text-white'}`}
+                            >
+                                {item.label}
+                            </a>
+                        ))}
+                    </nav>
+                </div>
+            )}
+        </header>
+    );
 };
 
 export default Header;

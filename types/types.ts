@@ -1,53 +1,49 @@
+export interface Comunicado {
+  id: string;
+  titulo: string;
+  conteudo: string;
+  categoria: string;
+  data_publicacao: string;
+  autor: string;
+  imagem_url?: string;
+  ativo?: boolean;
+}
+
 export interface Categoria {
   id: string;
   nome: string;
-  icone: string;
   cor: string;
-  ordem: number;
+  icone: string;
 }
 
 export interface Cupom {
   id: string;
-  anunciante_id: string;
   codigo: string;
   descricao: string;
-  percentual_desconto?: number;
-  valor_desconto?: number;
-  data_validade: string;
-  ativo: boolean;
+  anunciante_id: string;
 }
 
 export interface Anunciante {
   id: string;
   nome_empresa: string;
-  categoria_id: string;
   descricao: string;
-  telefone?: string;
-  whatsapp?: string;
-  email?: string;
-  endereco?: string;
-  site_url?: string;
-  instagram?: string;
-  logo_url?: string;
+  logo_url: string;
   banner_url?: string;
   plano: 'bronze' | 'prata' | 'ouro';
+  categoria_id: string;
+  // This is a joined table from Supabase
+  categorias_anunciantes: Categoria; 
+  endereco?: string;
+  telefone?: string;
+  email?: string;
+  whatsapp?: string;
+  site_url?: string;
+  instagram?: string;
+  // This is a joined table from Supabase
+  cupons_desconto: Cupom[];
   ativo: boolean;
-  destaque: boolean;
   visualizacoes: number;
   cliques: number;
-  cupons_desconto?: Cupom[];
-  categorias_anunciantes: Categoria;
-}
-
-export interface Comunicado {
-  id: string;
-  titulo: string;
-  conteudo: string;
-  data_publicacao: string;
-  autor: string;
-  categoria: 'urgente' | 'informativo' | 'evento' | string;
-  imagem_url?: string;
-  ativo: boolean;
 }
 
 export interface Faq {
@@ -55,7 +51,7 @@ export interface Faq {
   pergunta: string;
   resposta: string;
   ordem: number;
-  ativo: boolean;
+  ativo?: boolean;
 }
 
 export interface Evento {
@@ -66,15 +62,15 @@ export interface Evento {
   horario: string;
   local: string;
   imagem_url?: string;
-  ativo: boolean;
+  ativo?: boolean;
 }
 
 export interface Documento {
   id: string;
   titulo: string;
   descricao?: string;
-  url_arquivo: string;
   categoria: string;
+  url_arquivo: string;
   data_upload: string;
 }
 
@@ -82,7 +78,7 @@ export interface GaleriaImagem {
   id: string;
   titulo: string;
   descricao?: string;
-  url_imagem: string;
   album: string;
+  url_imagem: string;
   data_upload: string;
 }

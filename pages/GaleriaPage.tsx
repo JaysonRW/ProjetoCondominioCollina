@@ -124,6 +124,7 @@ const GaleriaPage: React.FC = () => {
                 <AlbumSkeleton />
             </>
           ) : Object.keys(albums).length > 0 ? (
+// FIX: The error on this line was due to missing type definitions. With types/types.ts created and imported, the type of `albums` is correctly inferred and `Object.entries(albums).map` is valid. No code change is needed here.
             Object.entries(albums).map(([albumName, images]) => (
               <div key={albumName} className="mb-12">
                 <h2 className="text-2xl font-bold text-brandGreen-dark mb-6 border-b-2 border-brandLime pb-2">{albumName}</h2>

@@ -1,4 +1,3 @@
-// FIX: Corrected React import to fix JSX typing errors and updated hook calls.
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -9,71 +8,88 @@ import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import FaqPage from './pages/FaqPage';
 import EventosPage from './pages/EventosPage';
-import GaleriaPage from './pages/GaleriaPage';
 import DocumentosPage from './pages/DocumentosPage';
+import GaleriaPage from './pages/GaleriaPage';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const validPages = ['home', 'comunicados', 'parceiros', 'documentos', 'galeria', 'eventos', 'faq', 'sindico'];
+    const loggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    if (loggedIn) {
+        setIsLoggedIn(true);
+    }
     
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (validPages.includes(hash)) {
-        setCurrentPage(hash);
-      } else {
-        setCurrentPage('home');
-      }
+        const hash = window.location.hash.replace('#', '');
+        if (hash) {
+            setCurrentPage(hash);
+        } else {
+            setCurrentPage('home');
+        }
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Initial check
+    handleHashChange(); // Set initial page based on hash
 
-    // Check for saved session
-    if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
-        setIsAdminAuthenticated(true);
-    }
-
-
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+        window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
-  const handleLoginSuccess = () => {
-    sessionStorage.setItem('isAdminAuthenticated', 'true');
-    setIsAdminAuthenticated(true);
+  const handleSetCurrentPage = (page: string) => {
+    setCurrentPage(page);
+    window.location.hash = page;
+    window.scrollTo(0, 0);
+  }
+
+  const handleLogin = () => {
+    sessionStorage.setItem('isLoggedIn', 'true');
+    setIsLoggedIn(true);
+    handleSetCurrentPage('admin');
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('isAdminAuthenticated');
-    setIsAdminAuthenticated(false);
-    // Redirect to home to avoid being stuck on the login page after logout
-    window.location.hash = 'home';
+    sessionStorage.removeItem('isLoggedIn');
+    setIsLoggedIn(false);
+    handleSetCurrentPage('home');
   };
 
-
   const renderPage = () => {
+    if (currentPage === 'admin' && !isLoggedIn) {
+        return <LoginPage onLoginSuccess={handleLogin} />;
+    }
+
     switch (currentPage) {
-      case 'comunicados': return <ComunicadosPage />;
-      case 'parceiros': return <ParceirosPage />;
-      case 'documentos': return <DocumentosPage />;
-      case 'galeria': return <GaleriaPage />;
-      case 'eventos': return <EventosPage />;
-      case 'faq': return <FaqPage />;
-      case 'sindico': 
-        return isAdminAuthenticated 
-            ? <AdminPage onLogout={handleLogout} /> 
-            : <LoginPage onLoginSuccess={handleLoginSuccess} />;
       case 'home':
+        return <HomePage setCurrentPage={handleSetCurrentPage} />;
+      case 'comunicados':
+        return <ComunicadosPage />;
+      case 'parceiros':
+        return <ParceirosPage />;
+      case 'eventos':
+        return <EventosPage />;
+      case 'galeria':
+        return <GaleriaPage />;
+      case 'documentos':
+        return <DocumentosPage />;
+      case 'faq':
+        return <FaqPage />;
+      case 'admin':
+        return isLoggedIn ? <AdminPage onLogout={handleLogout} /> : <LoginPage onLoginSuccess={handleLogin} />;
       default:
-        return <HomePage setCurrentPage={(page) => window.location.hash = page} />;
+        return <HomePage setCurrentPage={handleSetCurrentPage} />;
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen font-sans bg-gray-50">
-      <Header setCurrentPage={(page) => window.location.hash = page} currentPage={currentPage} />
+    <div className="flex flex-col min-h-screen font-sans">
+      <Header 
+        currentPage={currentPage} 
+        setCurrentPage={handleSetCurrentPage}
+        isLoggedIn={isLoggedIn}
+      />
       <main className="flex-grow">
         {renderPage()}
       </main>
