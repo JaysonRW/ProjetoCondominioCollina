@@ -31,7 +31,7 @@ const deleteFile = async (bucket: string, url: string): Promise<boolean> => {
 
 // Comunicados API
 export const getComunicados = async ({ limit, isAdmin = false }: { limit?: number, isAdmin?: boolean } = {}): Promise<Comunicado[]> => {
-    let query = supabase.from('comunicados').select('*').order('data_publicacao', { ascending: false });
+    let query = supabase.from('comunicado').select('*').order('data_publicacao', { ascending: false });
     if (limit) {
         query = query.limit(limit);
     }
@@ -49,7 +49,7 @@ export const createComunicado = async (comunicado: Omit<Comunicado, 'id' | 'data
         const filePath = `comunicados/${Date.now()}_${imageFile.name}`;
         imageUrl = await uploadFile(imageFile, 'imagens', filePath) || undefined;
     }
-    const { data, error } = await supabase.from('comunicados').insert([{ ...comunicado, imagem_url: imageUrl }]).select();
+    const { data, error } = await supabase.from('comunicado').insert([{ ...comunicado, imagem_url: imageUrl }]).select();
     if (error) {
         console.error('Error creating comunicado:', error);
         return null;
@@ -63,7 +63,7 @@ export const updateComunicado = async (id: string, updates: Partial<Comunicado>,
         const filePath = `comunicados/${Date.now()}_${imageFile.name}`;
         imageUrl = await uploadFile(imageFile, 'imagens', filePath) || undefined;
     }
-    const { data, error } = await supabase.from('comunicados').update({ ...updates, imagem_url: imageUrl }).eq('id', id).select();
+    const { data, error } = await supabase.from('comunicado').update({ ...updates, imagem_url: imageUrl }).eq('id', id).select();
     if (error) {
         console.error('Error updating comunicado:', error);
         return null;
@@ -75,7 +75,7 @@ export const deleteComunicado = async (id: string, imageUrl?: string): Promise<b
     if (imageUrl) {
         await deleteFile('imagens', imageUrl);
     }
-    const { error } = await supabase.from('comunicados').delete().eq('id', id);
+    const { error } = await supabase.from('comunicado').delete().eq('id', id);
     if (error) {
         console.error('Error deleting comunicado:', error);
         return false;
@@ -85,7 +85,7 @@ export const deleteComunicado = async (id: string, imageUrl?: string): Promise<b
 
 // FAQ API
 export const getFaqs = async (isAdmin = false): Promise<Faq[]> => {
-    let query = supabase.from('faqs').select('*').order('ordem', { ascending: true });
+    let query = supabase.from('faq').select('*').order('ordem', { ascending: true });
     if (!isAdmin) {
         query = query.eq('ativo', true);
     }
@@ -95,7 +95,7 @@ export const getFaqs = async (isAdmin = false): Promise<Faq[]> => {
 };
 
 export const createFaq = async (faq: Omit<Faq, 'id' | 'ativo'>): Promise<Faq | null> => {
-    const { data, error } = await supabase.from('faqs').insert([faq]).select();
+    const { data, error } = await supabase.from('faq').insert([faq]).select();
     if (error) {
         console.error('Error creating FAQ:', error);
         return null;
@@ -104,7 +104,7 @@ export const createFaq = async (faq: Omit<Faq, 'id' | 'ativo'>): Promise<Faq | n
 };
 
 export const updateFaq = async (id: string, updates: Partial<Faq>): Promise<Faq | null> => {
-    const { data, error } = await supabase.from('faqs').update(updates).eq('id', id).select();
+    const { data, error } = await supabase.from('faq').update(updates).eq('id', id).select();
     if (error) {
         console.error('Error updating FAQ:', error);
         return null;
@@ -113,7 +113,7 @@ export const updateFaq = async (id: string, updates: Partial<Faq>): Promise<Faq 
 };
 
 export const deleteFaq = async (id: string): Promise<boolean> => {
-    const { error } = await supabase.from('faqs').delete().eq('id', id);
+    const { error } = await supabase.from('faq').delete().eq('id', id);
     if (error) {
         console.error('Error deleting FAQ:', error);
         return false;
@@ -123,7 +123,7 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 
 // Eventos API
 export const getEventos = async (isAdmin = false): Promise<Evento[]> => {
-    let query = supabase.from('eventos').select('*').order('data_evento', { ascending: false });
+    let query = supabase.from('evento').select('*').order('data_evento', { ascending: false });
     if (!isAdmin) {
         query = query.eq('ativo', true);
     }
@@ -136,7 +136,7 @@ export const getEventosPaginados = async ({ page, pageSize, filter }: { page: nu
     const today = new Date().toISOString().split('T')[0];
     const isUpcoming = filter === 'proximos';
 
-    let query = supabase.from('eventos')
+    let query = supabase.from('evento')
         .select('*', { count: 'exact' })
         .eq('ativo', true)
         .order('data_evento', { ascending: isUpcoming });
@@ -163,7 +163,7 @@ export const createEvento = async (evento: Omit<Evento, 'id'>, imageFile?: File)
         const filePath = `eventos/${Date.now()}_${imageFile.name}`;
         imageUrl = await uploadFile(imageFile, 'imagens', filePath) || undefined;
     }
-    const { data, error } = await supabase.from('eventos').insert([{ ...evento, imagem_url: imageUrl }]).select();
+    const { data, error } = await supabase.from('evento').insert([{ ...evento, imagem_url: imageUrl }]).select();
     if (error) console.error('Error creating evento:', error);
     return data ? data[0] : null;
 };
@@ -174,14 +174,14 @@ export const updateEvento = async (id: string, updates: Partial<Evento>, imageFi
         const filePath = `eventos/${Date.now()}_${imageFile.name}`;
         imageUrl = await uploadFile(imageFile, 'imagens', filePath) || undefined;
     }
-    const { data, error } = await supabase.from('eventos').update({ ...updates, imagem_url: imageUrl }).eq('id', id).select();
+    const { data, error } = await supabase.from('evento').update({ ...updates, imagem_url: imageUrl }).eq('id', id).select();
     if (error) console.error('Error updating evento:', error);
     return data ? data[0] : null;
 };
 
 export const deleteEvento = async (id: string): Promise<boolean> => {
     // Note: This assumes image deletion is handled separately if needed, as URL isn't passed.
-    const { error } = await supabase.from('eventos').delete().eq('id', id);
+    const { error } = await supabase.from('evento').delete().eq('id', id);
     if (error) console.error('Error deleting evento:', error);
     return !error;
 };
@@ -189,7 +189,7 @@ export const deleteEvento = async (id: string): Promise<boolean> => {
 
 // Documentos API
 export const getDocumentos = async (): Promise<Documento[]> => {
-    const { data, error } = await supabase.from('documentos').select('*').order('data_upload', { ascending: false });
+    const { data, error } = await supabase.from('documento').select('*').order('data_upload', { ascending: false });
     if (error) console.error('Error fetching documentos:', error);
     return data || [];
 };
@@ -198,7 +198,7 @@ export const createDocumento = async (docData: Omit<Documento, 'id' | 'url_arqui
     const filePath = `documentos/${Date.now()}_${file.name}`;
     const fileUrl = await uploadFile(file, 'documentos', filePath);
     if (!fileUrl) return null;
-    const { data, error } = await supabase.from('documentos').insert([{ ...docData, url_arquivo: fileUrl }]).select();
+    const { data, error } = await supabase.from('documento').insert([{ ...docData, url_arquivo: fileUrl }]).select();
     if (error) {
         console.error('Error creating documento:', error);
         return null;
@@ -208,7 +208,7 @@ export const createDocumento = async (docData: Omit<Documento, 'id' | 'url_arqui
 
 export const deleteDocumento = async (id: string, fileUrl: string): Promise<boolean> => {
     await deleteFile('documentos', fileUrl);
-    const { error } = await supabase.from('documentos').delete().eq('id', id);
+    const { error } = await supabase.from('documento').delete().eq('id', id);
     if (error) {
         console.error('Error deleting documento:', error);
         return false;
@@ -218,7 +218,7 @@ export const deleteDocumento = async (id: string, fileUrl: string): Promise<bool
 
 // Galeria API
 export const getImagensGaleria = async (): Promise<GaleriaImagem[]> => {
-    const { data, error } = await supabase.from('galeria_imagens').select('*').order('data_upload', { ascending: false });
+    const { data, error } = await supabase.from('galeria_imagem').select('*').order('data_upload', { ascending: false });
     if (error) console.error('Error fetching galeria imagens:', error);
     return data || [];
 };
@@ -228,7 +228,7 @@ export const createImagemGaleria = async (imgData: Omit<GaleriaImagem, 'id' | 'u
     const fileUrl = await uploadFile(file, 'imagens', filePath);
     if (!fileUrl) return null;
 
-    const { data, error } = await supabase.from('galeria_imagens').insert([{ ...imgData, url_imagem: fileUrl }]).select();
+    const { data, error } = await supabase.from('galeria_imagem').insert([{ ...imgData, url_imagem: fileUrl }]).select();
     if (error) {
         console.error('Error creating imagem galeria:', error);
         return null;
@@ -238,7 +238,7 @@ export const createImagemGaleria = async (imgData: Omit<GaleriaImagem, 'id' | 'u
 
 export const deleteImagemGaleria = async (id: string, imageUrl: string): Promise<boolean> => {
     await deleteFile('imagens', imageUrl);
-    const { error } = await supabase.from('galeria_imagens').delete().eq('id', id);
+    const { error } = await supabase.from('galeria_imagem').delete().eq('id', id);
     if (error) {
         console.error('Error deleting imagem galeria:', error);
         return false;

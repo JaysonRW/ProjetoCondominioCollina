@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import { logoBase64 } from '../assets/logo';
+import { logoUrl } from '../assets/logo';
 
 type AdminType = 'sindico' | 'clube';
 
@@ -59,7 +59,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, adminType 
                     {/* Logo */}
                     <div className="flex-shrink-0">
                         <a href="#home" onClick={() => setCurrentPage('home')} className="flex items-center gap-2">
-                             <img src={logoBase64} alt="Collina Belvedere Logo" className="h-12" />
+                             <img src={logoUrl} alt="Collina Belvedere Logo" className="h-12" />
                         </a>
                     </div>
 

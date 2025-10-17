@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, LogIn, Mail } from 'lucide-react';
-import { logoBase64 } from '../assets/logo';
+import { logoUrl } from '../assets/logo';
 
 type AdminType = 'sindico' | 'clube';
 
@@ -40,7 +40,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     <div className="flex items-center justify-center min-h-[calc(100vh-148px)] bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 space-y-6">
         <div className="text-center">
-            <img src={logoBase64} alt="Logo" className="mx-auto h-16 mb-4" />
+            <img src={logoUrl} alt="Logo" className="mx-auto h-16 mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 font-display">Acesso Restrito</h1>
           <p className="text-gray-600">Área exclusiva para administração.</p>
         </div>
