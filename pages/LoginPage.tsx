@@ -22,7 +22,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     // Simulating an API call
     setTimeout(() => {
       // Síndico login
-      if (password === 'admin' && email === '') {
+      if (email === 'admin@collinabelvedere.com' && password === 'admin123') {
         onLoginSuccess('sindico');
       } 
       // Clube de Vantagens login
@@ -57,10 +57,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
               type="email"
               autoComplete="email"
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-brandGreen focus:border-brandGreen"
-              placeholder="Email (opcional para síndico)"
+              placeholder="Digite seu e-mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
+              required
             />
           </div>
 
