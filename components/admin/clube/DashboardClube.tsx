@@ -2,22 +2,36 @@ import React from 'react';
 import DashboardCards from './DashboardCards';
 import PagamentosPendentes from './PagamentosPendentes';
 import PerformanceAnunciantes from './PerformanceAnunciantes';
+import { PlusCircle } from 'lucide-react';
 
 const DashboardClube: React.FC = () => {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
-       <h2 className="text-xl font-bold text-gray-800 mb-4">Dashboard</h2>
-       <div className="space-y-6">
-            <DashboardCards />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                <PerformanceAnunciantes />
-                </div>
-                <div>
-                <PagamentosPendentes />
-                </div>
-            </div>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Dashboard</h2>
+        <DashboardCards />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+            <PerformanceAnunciantes />
         </div>
+        <div className="lg:col-span-1">
+            <PagamentosPendentes />
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Ações Rápidas</h3>
+        <div className="flex flex-wrap gap-4">
+            <button className="bg-brandGreen text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow-md">
+                <PlusCircle size={20} /> Novo Anunciante
+            </button>
+            <button className="bg-gray-200 text-gray-700 font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-300 transition-colors">
+                Gerar Relatório Mensal
+            </button>
+        </div>
+      </div>
     </div>
   );
 };

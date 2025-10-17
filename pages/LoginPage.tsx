@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Lock, LogIn } from 'lucide-react';
+import { Lock, LogIn, Mail } from 'lucide-react';
 import { logoBase64 } from '../assets/logo';
 
+type AdminType = 'sindico' | 'clube';
+
 interface LoginPageProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (adminType: AdminType) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,12 +21,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
     // Simulating an API call
     setTimeout(() => {
-      // In a real application, this would be a call to an authentication service.
-      // For this example, we use a simple hardcoded password.
-      if (password === 'admin') {
-        onLoginSuccess();
-      } else {
-        setError('Senha incorreta. Tente novamente.');
+      // Síndico login
+      if (password === 'admin' && email === '') {
+        onLoginSuccess('sindico');
+      } 
+      // Clube de Vantagens login
+      else if (email === 'propagoumkd@gmail.com' && password === 'adminclub') {
+        onLoginSuccess('clube');
+      } 
+      else {
+        setError('Credenciais incorretas. Tente novamente.');
       }
       setIsLoading(false);
     }, 1000);
@@ -39,6 +46,24 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
+           <div className="relative">
+             <label htmlFor="email" className="sr-only">Email</label>
+             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Mail className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-brandGreen focus:border-brandGreen"
+              placeholder="Email (opcional para síndico)"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+
           <div className="relative">
              <label htmlFor="password" className="sr-only">Senha</label>
              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

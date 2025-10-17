@@ -2,28 +2,38 @@ import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { logoBase64 } from '../assets/logo';
 
+type AdminType = 'sindico' | 'clube';
+
 interface HeaderProps {
     currentPage: string;
     setCurrentPage: (page: string) => void;
-    isLoggedIn: boolean;
+    adminType: AdminType | null;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, isLoggedIn }) => {
+const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, adminType }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const navItems = [
+    const baseNavItems = [
         { key: 'home', label: 'Início' },
         { key: 'comunicados', label: 'Comunicados' },
-        { key: 'parceiros', label: 'Clube de Vantagens' },
+        { key: 'parceiros', label: 'Clube de Vantagens Colina Belvedere' },
         { key: 'eventos', label: 'Eventos' },
         { key: 'galeria', label: 'Galeria' },
         { key: 'documentos', label: 'Documentos' },
         { key: 'faq', label: 'FAQ' },
     ];
     
-    if (isLoggedIn) {
-        navItems.push({ key: 'admin', label: 'Painel Admin' });
-    }
+    const getNavItems = () => {
+        const navItems = [...baseNavItems];
+        if (adminType === 'sindico') {
+            navItems.push({ key: 'sindico-admin', label: 'Painel Síndico' });
+        } else if (adminType === 'clube') {
+            navItems.push({ key: 'clube-admin', label: 'Painel Clube' });
+        }
+        return navItems;
+    };
+    
+    const navItems = getNavItems();
 
     const NavLink: React.FC<{ itemKey: string; label: string }> = ({ itemKey, label }) => (
         <a

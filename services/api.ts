@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Comunicado, Faq, Evento, Documento, GaleriaImagem, Anunciante, Categoria } from '../types/types';
+import { Comunicado, Faq, Evento, Documento, GaleriaImagem, Anunciante, Categoria, FinanceiroClube } from '../types/types';
 
 // Helper for file uploads
 const uploadFile = async (file: File, bucket: string, path: string): Promise<string | null> => {
@@ -16,6 +16,7 @@ const uploadFile = async (file: File, bucket: string, path: string): Promise<str
 const deleteFile = async (bucket: string, url: string): Promise<boolean> => {
     try {
         const path = new URL(url).pathname.split(`/${bucket}/`)[1];
+        if (!path) return false;
         const { error } = await supabase.storage.from(bucket).remove([path]);
         if (error) {
             console.error(`Error deleting file from ${bucket}:`, error);
@@ -245,7 +246,8 @@ export const deleteImagemGaleria = async (id: string, imageUrl: string): Promise
     return true;
 };
 
-// Parceiros / Anunciantes API
+// ANUNCIANTES API
+// Public view
 export const getAnunciantes = async (): Promise<Anunciante[]> => {
     const { data, error } = await supabase
         .from('anunciantes')
@@ -270,4 +272,87 @@ export const trackAnuncianteView = async (id: string) => {
 export const trackAnuncianteClick = async (id: string) => {
     const { error } = await supabase.rpc('increment_click_count', { anunciante_id: id });
     if (error) console.error('Error tracking click:', error);
+};
+
+// Admin view for Clube de Vantagens
+export const getAdminAnunciantes = async (): Promise<Anunciante[]> => {
+    const { data, error } = await supabase
+        .from('anunciantes')
+        .select('*, categorias_anunciantes(*)')
+        .order('nome_empresa');
+    if (error) console.error('Error fetching admin anunciantes:', error);
+    return (data as any) || [];
+};
+
+export const createAnunciante = async (anuncianteData: Omit<Anunciante, 'id' | 'categorias_anunciantes' | 'cupons_desconto'>, logoFile?: File, bannerFile?: File): Promise<Anunciante | null> => {
+    let logo_url = '';
+    let banner_url;
+
+    if (logoFile) {
+        logo_url = await uploadFile(logoFile, 'imagens', `anunciantes/${Date.now()}_logo_${logoFile.name}`) ?? '';
+    }
+    if (bannerFile) {
+        banner_url = await uploadFile(bannerFile, 'imagens', `anunciantes/${Date.now()}_banner_${bannerFile.name}`);
+    }
+
+    const { data, error } = await supabase
+        .from('anunciantes')
+        .insert([{ ...anuncianteData, logo_url, banner_url }])
+        .select()
+        .single();
+    if (error) {
+        console.error('Error creating anunciante:', error);
+        return null;
+    }
+    return data as Anunciante;
+};
+
+export const updateAnunciante = async (id: string, updates: Partial<Anunciante>, logoFile?: File, bannerFile?: File): Promise<Anunciante | null> => {
+    const finalUpdates: Partial<Anunciante> = { ...updates };
+
+    if (logoFile) {
+        finalUpdates.logo_url = await uploadFile(logoFile, 'imagens', `anunciantes/${id}_logo_${logoFile.name}`) ?? undefined;
+    }
+    if (bannerFile) {
+        finalUpdates.banner_url = await uploadFile(bannerFile, 'imagens', `anunciantes/${id}_banner_${bannerFile.name}`) ?? undefined;
+    }
+
+    const { data, error } = await supabase
+        .from('anunciantes')
+        .update(finalUpdates)
+        .eq('id', id)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('Error updating anunciante:', error);
+        return null;
+    }
+    return data as Anunciante;
+};
+
+export const deleteAnunciante = async (id: string, logoUrl?: string, bannerUrl?: string): Promise<boolean> => {
+    if (logoUrl) await deleteFile('imagens', logoUrl);
+    if (bannerUrl) await deleteFile('imagens', bannerUrl);
+
+    const { error } = await supabase.from('anunciantes').delete().eq('id', id);
+    if (error) {
+        console.error('Error deleting anunciante:', error);
+        return false;
+    }
+    return true;
+};
+
+// Financeiro Clube API
+export const getFinanceiroClube = async (): Promise<FinanceiroClube[]> => {
+    const { data, error } = await supabase
+        .from('financeiro_clube')
+        .select('*, anunciantes(nome_empresa)')
+        .order('mes_referencia', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching financeiro data:', error);
+        return [];
+    }
+    return data || [];
 };

@@ -10,15 +10,18 @@ import FaqPage from './pages/FaqPage';
 import EventosPage from './pages/EventosPage';
 import DocumentosPage from './pages/DocumentosPage';
 import GaleriaPage from './pages/GaleriaPage';
+import ClubeAdminPage from './pages/ClubeAdminPage';
+
+type AdminType = 'sindico' | 'clube';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [adminType, setAdminType] = useState<AdminType | null>(null);
 
   useEffect(() => {
-    const loggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-    if (loggedIn) {
-        setIsLoggedIn(true);
+    const loggedInType = sessionStorage.getItem('adminType') as AdminType | null;
+    if (loggedInType) {
+        setAdminType(loggedInType);
     }
     
     const handleHashChange = () => {
@@ -31,7 +34,7 @@ const App: React.FC = () => {
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Set initial page based on hash
+    handleHashChange();
 
     return () => {
         window.removeEventListener('hashchange', handleHashChange);
@@ -44,21 +47,23 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }
 
-  const handleLogin = () => {
-    sessionStorage.setItem('isLoggedIn', 'true');
-    setIsLoggedIn(true);
-    handleSetCurrentPage('admin');
+  const handleLogin = (type: AdminType) => {
+    sessionStorage.setItem('adminType', type);
+    setAdminType(type);
+    const adminPage = type === 'sindico' ? 'sindico-admin' : 'clube-admin';
+    handleSetCurrentPage(adminPage);
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('isLoggedIn');
-    setIsLoggedIn(false);
+    sessionStorage.removeItem('adminType');
+    setAdminType(null);
     handleSetCurrentPage('home');
   };
 
   const renderPage = () => {
-    if (currentPage === 'admin' && !isLoggedIn) {
-        return <LoginPage onLoginSuccess={handleLogin} />;
+    const needsLogin = (currentPage === 'sindico-admin' && adminType !== 'sindico') || (currentPage === 'clube-admin' && adminType !== 'clube');
+    if (needsLogin) {
+       return <LoginPage onLoginSuccess={handleLogin} />;
     }
 
     switch (currentPage) {
@@ -76,8 +81,10 @@ const App: React.FC = () => {
         return <DocumentosPage />;
       case 'faq':
         return <FaqPage />;
-      case 'admin':
-        return isLoggedIn ? <AdminPage onLogout={handleLogout} /> : <LoginPage onLoginSuccess={handleLogin} />;
+      case 'sindico-admin':
+        return adminType === 'sindico' ? <AdminPage onLogout={handleLogout} /> : <LoginPage onLoginSuccess={handleLogin} />;
+      case 'clube-admin':
+        return adminType === 'clube' ? <ClubeAdminPage onLogout={handleLogout} /> : <LoginPage onLoginSuccess={handleLogin} />;
       default:
         return <HomePage setCurrentPage={handleSetCurrentPage} />;
     }
@@ -88,7 +95,7 @@ const App: React.FC = () => {
       <Header 
         currentPage={currentPage} 
         setCurrentPage={handleSetCurrentPage}
-        isLoggedIn={isLoggedIn}
+        adminType={adminType}
       />
       <main className="flex-grow">
         {renderPage()}

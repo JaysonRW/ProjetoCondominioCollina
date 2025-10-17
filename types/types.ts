@@ -30,8 +30,8 @@ export interface Anunciante {
   logo_url: string;
   banner_url?: string;
   plano: 'bronze' | 'prata' | 'ouro';
+  valor_mensal: number;
   categoria_id: string;
-  // This is a joined table from Supabase
   categorias_anunciantes: Categoria; 
   endereco?: string;
   telefone?: string;
@@ -39,11 +39,19 @@ export interface Anunciante {
   whatsapp?: string;
   site_url?: string;
   instagram?: string;
-  // This is a joined table from Supabase
   cupons_desconto: Cupom[];
   ativo: boolean;
   visualizacoes: number;
   cliques: number;
+  
+  // Novos campos financeiros e de contrato
+  contrato_inicio?: string;
+  contrato_duracao?: number;
+  contrato_fim?: string;
+  dia_vencimento?: number;
+  renovacao_automatica?: boolean;
+  comissao_gestor?: number;
+  notas_internas?: string;
 }
 
 export interface Faq {
@@ -81,4 +89,15 @@ export interface GaleriaImagem {
   album: string;
   url_imagem: string;
   data_upload: string;
+}
+
+export interface FinanceiroClube {
+  id: string;
+  anunciante_id: string;
+  anunciantes: { nome_empresa: string };
+  mes_referencia: string;
+  valor_contratado: number;
+  valor_pago?: number;
+  data_pagamento?: string;
+  status: 'pendente' | 'pago' | 'atrasado' | 'cancelado';
 }
