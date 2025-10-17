@@ -12,15 +12,6 @@ import EventosPage from './pages/EventosPage';
 import GaleriaPage from './pages/GaleriaPage';
 import DocumentosPage from './pages/DocumentosPage';
 
-const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
-    <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
-            <p className="text-gray-600 mt-2">Esta página está em construção.</p>
-        </div>
-    </div>
-);
-
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
