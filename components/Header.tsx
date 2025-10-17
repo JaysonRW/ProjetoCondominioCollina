@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ setCurrentPage, currentPage }) => {
   const navItems = [
     { page: 'home', label: 'Início' },
     { page: 'comunicados', label: 'Comunicados' },
-    { page: 'parceiros', label: 'Parceiros' },
+    { page: 'parceiros', label: 'Clube de Vantagens Colina Belvedere' },
     { page: 'documentos', label: 'Documentos' },
     { page: 'galeria', label: 'Galeria' },
     { page: 'eventos', label: 'Eventos' },
