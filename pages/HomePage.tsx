@@ -129,7 +129,14 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
                 <div className="bg-white p-8 rounded-lg border-2 border-brandLime-DEFAULT shadow-lg">
                     <h3 className="text-2xl font-bold text-gray-800 mb-3">Aplicativo do Morador</h3>
                     <p className="text-gray-600 mb-6">Faça reservas de espaços e solicite serviços pelo aplicativo oficial.</p>
-                    <button className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-2 px-6 rounded-md transition-all">Acessar Aplicativo</button>
+                    <a 
+                        href="https://sindacadministr.superlogica.net/clients/areadocondomino" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-block bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-2 px-6 rounded-md transition-all"
+                    >
+                        Acessar Aplicativo
+                    </a>
                 </div>
                 <div className="bg-white p-8 rounded-lg border-2 border-brandLime-DEFAULT shadow-lg">
                     <h3 className="text-2xl font-bold text-gray-800 mb-3">Suporte e Dúvidas</h3>
