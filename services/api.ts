@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Anunciante, Categoria, Comunicado, Cupom, Faq } from '../types/types';
+import { Anunciante, Categoria, Comunicado, Cupom, Faq, Evento } from '../types/types';
 
 // ==================
 // COMUNICADOS API
@@ -160,6 +160,106 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 
   if (error) {
     console.error('Error deleting FAQ:', error);
+    return false;
+  }
+  return true;
+};
+
+// ==================
+// EVENTOS API
+// ==================
+
+export const getEventos = async (isAdmin: boolean = false): Promise<Evento[]> => {
+    let query = supabase.from('eventos').select('*').order('data_evento', { ascending: false });
+    if (!isAdmin) {
+      query = query.eq('ativo', true);
+    }
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching eventos:', error);
+      return [];
+    }
+    return data as Evento[];
+};
+
+export const createEvento = async (
+  eventoData: Omit<Evento, 'id' | 'ativo'>,
+  imageFile?: File
+): Promise<Evento | null> => {
+  let imageUrl: string | undefined = undefined;
+
+  if (imageFile) {
+    const filePath = `public/eventos/${Date.now()}-${imageFile.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('eventos-imagens')
+      .upload(filePath, imageFile);
+
+    if (uploadError) {
+      console.error('Error uploading event image:', uploadError);
+    } else {
+      const { data: urlData } = supabase.storage
+        .from('eventos-imagens')
+        .getPublicUrl(filePath);
+      imageUrl = urlData.publicUrl;
+    }
+  }
+
+  const dataToInsert = { ...eventoData, imagem_url: imageUrl, ativo: true };
+  const { data, error } = await supabase
+    .from('eventos')
+    .insert([dataToInsert])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating evento:', error);
+    return null;
+  }
+  return data as Evento;
+};
+
+export const updateEvento = async (
+  id: string,
+  eventoData: Partial<Omit<Evento, 'id'>>,
+  imageFile?: File
+): Promise<Evento | null> => {
+  let imageUrl: string | undefined = eventoData.imagem_url;
+
+  if (imageFile) {
+    const filePath = `public/eventos/${Date.now()}-${imageFile.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('eventos-imagens')
+      .upload(filePath, imageFile);
+
+    if (uploadError) {
+      console.error('Error uploading new event image:', uploadError);
+    } else {
+      const { data: urlData } = supabase.storage
+        .from('eventos-imagens')
+        .getPublicUrl(filePath);
+      imageUrl = urlData.publicUrl;
+    }
+  }
+
+  const dataToUpdate = { ...eventoData, imagem_url: imageUrl };
+  const { data, error } = await supabase
+    .from('eventos')
+    .update(dataToUpdate)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating evento:', error);
+    return null;
+  }
+  return data as Evento;
+};
+
+export const deleteEvento = async (id: string): Promise<boolean> => {
+  const { error } = await supabase.from('eventos').delete().eq('id', id);
+  if (error) {
+    console.error('Error deleting evento:', error);
     return false;
   }
   return true;

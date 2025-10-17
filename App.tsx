@@ -8,6 +8,7 @@ import ParceirosPage from './pages/ParceirosPage';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import FaqPage from './pages/FaqPage';
+import EventosPage from './pages/EventosPage';
 
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
     <div className="flex items-center justify-center h-96">
@@ -65,7 +66,7 @@ const App: React.FC = () => {
       case 'parceiros': return <ParceirosPage />;
       case 'documentos': return <PlaceholderPage title="Documentos" />;
       case 'galeria': return <PlaceholderPage title="Galeria" />;
-      case 'eventos': return <PlaceholderPage title="Eventos" />;
+      case 'eventos': return <EventosPage />;
       case 'faq': return <FaqPage />;
       case 'sindico': 
         return isAdminAuthenticated 

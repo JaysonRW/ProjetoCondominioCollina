@@ -57,3 +57,14 @@ export interface Faq {
   ordem: number;
   ativo: boolean;
 }
+
+export interface Evento {
+  id: string;
+  titulo: string;
+  descricao: string;
+  data_evento: string;
+  horario: string;
+  local: string;
+  imagem_url?: string;
+  ativo: boolean;
+}
