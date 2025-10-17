@@ -29,6 +29,9 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, adminType 
             navItems.push({ key: 'sindico-admin', label: 'Painel Síndico' });
         } else if (adminType === 'clube') {
             navItems.push({ key: 'clube-admin', label: 'Painel Clube' });
+        } else {
+            // Se não estiver logado, mostra o botão de login
+            navItems.push({ key: 'login', label: 'Acesso Restrito' });
         }
         return navItems;
     };

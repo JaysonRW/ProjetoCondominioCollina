@@ -61,6 +61,10 @@ const App: React.FC = () => {
   };
 
   const renderPage = () => {
+    if (currentPage === 'login' && !adminType) {
+        return <LoginPage onLoginSuccess={handleLogin} />;
+    }
+
     const needsLogin = (currentPage === 'sindico-admin' && adminType !== 'sindico') || (currentPage === 'clube-admin' && adminType !== 'clube');
     if (needsLogin) {
        return <LoginPage onLoginSuccess={handleLogin} />;
@@ -81,6 +85,14 @@ const App: React.FC = () => {
         return <DocumentosPage />;
       case 'faq':
         return <FaqPage />;
+      case 'login':
+        // If already logged in and trying to access #login, redirect to their admin page
+        if (adminType) {
+            const adminPage = adminType === 'sindico' ? 'sindico-admin' : 'clube-admin';
+            handleSetCurrentPage(adminPage);
+            return null; // or a loading indicator
+        }
+        return <LoginPage onLoginSuccess={handleLogin} />;
       case 'sindico-admin':
         return adminType === 'sindico' ? <AdminPage onLogout={handleLogout} /> : <LoginPage onLoginSuccess={handleLogin} />;
       case 'clube-admin':
