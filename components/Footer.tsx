@@ -12,7 +12,18 @@ const Footer: React.FC = () => {
             <span className="font-bold text-lg">Collina Belvedere</span>
           </div>
           <div className="text-center md:text-right">
-            <p className="text-sm text-gray-400">&copy; {new Date().getFullYear()} Condomínio Collina Belvedere. Todos os direitos reservados.</p>
+            <p className="text-sm text-gray-400">
+            &copy; {new Date().getFullYear()} Condomínio Collina Belvedere. Todos os direitos reservados. 
+            Portal desenvolvido por{' '}
+            <a 
+            href="https://propagounegocios.com.br" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300 underline transition-colors"
+            >
+            propagounegocios.com.br
+            </a>
+            </p>
             <p className="text-sm text-gray-400">Contato da Administração: (11) 1234-5678</p>
           </div>
         </div>
