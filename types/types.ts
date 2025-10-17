@@ -27,6 +27,7 @@ export interface Anunciante {
   id: string;
   nome_empresa: string;
   descricao: string;
+  descricao_curta?: string;
   logo_url: string;
   banner_url?: string;
   plano: 'bronze' | 'prata' | 'ouro';
@@ -34,23 +35,27 @@ export interface Anunciante {
   categoria_id: string;
   categorias_anunciantes: Categoria; 
   endereco?: string;
+  cep?: string;
   telefone?: string;
   email?: string;
   whatsapp?: string;
   site_url?: string;
   instagram?: string;
+  facebook?: string;
   cupons_desconto: Cupom[];
   ativo: boolean;
+  destaque?: boolean;
+  ordem_exibicao?: number;
   visualizacoes: number;
   cliques: number;
   
-  // Novos campos financeiros e de contrato
+  // Campos financeiros e de contrato
   contrato_inicio?: string;
-  contrato_duracao?: number;
+  contrato_duracao?: number; // em meses
   contrato_fim?: string;
   dia_vencimento?: number;
   renovacao_automatica?: boolean;
-  comissao_gestor?: number;
+  comissao_gestor?: number; // percentual
   notas_internas?: string;
 }
 
