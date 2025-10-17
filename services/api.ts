@@ -5,12 +5,16 @@ import { Anunciante, Categoria, Comunicado, Cupom, Faq, Evento, Documento, Galer
 // COMUNICADOS API
 // ==================
 
-export const getComunicados = async (limit?: number): Promise<Comunicado[]> => {
+export const getComunicados = async (options: { limit?: number; isAdmin?: boolean } = {}): Promise<Comunicado[]> => {
+  const { limit, isAdmin = false } = options;
   let query = supabase
     .from('comunicados')
     .select('*')
-    .eq('ativo', true)
     .order('data_publicacao', { ascending: false });
+
+  if (!isAdmin) {
+    query = query.eq('ativo', true);
+  }
 
   if (limit) {
     query = query.limit(limit);
@@ -31,7 +35,7 @@ export const createComunicado = async (
   let imageUrl: string | undefined = undefined;
 
   if (imageFile) {
-    const filePath = `public/${Date.now()}-${imageFile.name}`;
+    const filePath = `public/comunicados/${Date.now()}-${imageFile.name}`;
     const { error: uploadError } = await supabase.storage
       .from('comunicados-imagens')
       .upload(filePath, imageFile);
@@ -58,6 +62,64 @@ export const createComunicado = async (
     return null;
   }
   return data as Comunicado;
+};
+
+export const updateComunicado = async (
+  id: string,
+  comunicadoData: Partial<Omit<Comunicado, 'id'>>,
+  imageFile?: File
+): Promise<Comunicado | null> => {
+  let imageUrl: string | undefined = comunicadoData.imagem_url;
+
+  if (imageFile) {
+    const filePath = `public/comunicados/${Date.now()}-${imageFile.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('comunicados-imagens')
+      .upload(filePath, imageFile);
+
+    if (uploadError) {
+      console.error('Error uploading new comunicado image:', uploadError);
+    } else {
+      const { data: urlData } = supabase.storage
+        .from('comunicados-imagens')
+        .getPublicUrl(filePath);
+      imageUrl = urlData.publicUrl;
+    }
+  }
+
+  const dataToUpdate = { ...comunicadoData, imagem_url: imageUrl };
+  const { data, error } = await supabase
+    .from('comunicados')
+    .update(dataToUpdate)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating comunicado:', error);
+    return null;
+  }
+  return data as Comunicado;
+};
+
+export const deleteComunicado = async (id: string, imagem_url?: string): Promise<boolean> => {
+  if (imagem_url) {
+    const filePath = imagem_url.substring(imagem_url.indexOf('public/comunicados/'));
+    const { error: storageError } = await supabase.storage
+      .from('comunicados-imagens')
+      .remove([filePath]);
+      
+    if (storageError) {
+        console.error('Error deleting image from storage:', storageError);
+    }
+  }
+
+  const { error } = await supabase.from('comunicados').delete().eq('id', id);
+  if (error) {
+    console.error('Error deleting comunicado:', error);
+    return false;
+  }
+  return true;
 };
 
 

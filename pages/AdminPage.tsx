@@ -6,9 +6,12 @@ import {
   getFaqs, createFaq, updateFaq, deleteFaq, 
   getEventos, createEvento, updateEvento, deleteEvento,
   getDocumentos, createDocumento, deleteDocumento,
-  getImagensGaleria, createImagemGaleria, deleteImagemGaleria
+  getImagensGaleria, createImagemGaleria, deleteImagemGaleria,
+  getComunicados,
+  updateComunicado,
+  deleteComunicado
 } from '../services/api';
-import { Faq, Evento, Documento, GaleriaImagem } from '../types/types';
+import { Faq, Evento, Documento, GaleriaImagem, Comunicado } from '../types/types';
 import Skeleton from '../components/Skeleton';
 
 interface AdminPageProps {
@@ -20,10 +23,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State for Comunicados
+  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
+  const [loadingComunicados, setLoadingComunicados] = useState(false);
   const [isComunicadoModalOpen, setIsComunicadoModalOpen] = useState(false);
-  const [newComunicadoData, setNewComunicadoData] = useState({
-    titulo: '', conteudo: '', categoria: 'informativo', autor: 'Administração',
-  });
+  const [currentComunicado, setCurrentComunicado] = useState<Partial<Comunicado>>({});
+  const [isEditingComunicado, setIsEditingComunicado] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   // State for FAQ
@@ -59,6 +63,12 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
   });
   const [imagemGaleriaFile, setImagemGaleriaFile] = useState<File | null>(null);
 
+  const loadComunicados = useCallback(async () => {
+    setLoadingComunicados(true);
+    const data = await getComunicados({ isAdmin: true });
+    setComunicados(data);
+    setLoadingComunicados(false);
+  }, []);
 
   const loadFaqs = useCallback(async () => {
     setLoadingFaqs(true);
@@ -89,6 +99,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
   }, []);
 
   useEffect(() => {
+    if (activeTab === 'comunicados') {
+      loadComunicados();
+    }
     if (activeTab === 'faq') {
       loadFaqs();
     }
@@ -101,22 +114,56 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
     if (activeTab === 'galeria') {
       loadImagensGaleria();
     }
-  }, [activeTab, loadFaqs, loadEventos, loadDocumentos, loadImagensGaleria]);
+  }, [activeTab, loadComunicados, loadFaqs, loadEventos, loadDocumentos, loadImagensGaleria]);
 
-  const handleCreateComunicadoSubmit = async (e: React.FormEvent) => {
+  const openComunicadoModal = (comunicado?: Comunicado) => {
+    if (comunicado) {
+        setCurrentComunicado(comunicado);
+        setIsEditingComunicado(true);
+    } else {
+        setCurrentComunicado({ titulo: '', conteudo: '', categoria: 'Informativo', autor: 'Administração', ativo: true });
+        setIsEditingComunicado(false);
+    }
+    setImageFile(null);
+    setIsComunicadoModalOpen(true);
+  };
+
+  const handleComunicadoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const result = await createComunicado(newComunicadoData, imageFile || undefined);
-    if (result) {
-      alert('Comunicado criado com sucesso!');
-      setIsComunicadoModalOpen(false);
-      setNewComunicadoData({ titulo: '', conteudo: '', categoria: 'informativo', autor: 'Administração' });
-      setImageFile(null);
-      // Here you would typically refetch the list of comunicados
+    let success = false;
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, data_publicacao, ...comunicadoData } = currentComunicado;
+
+    if (isEditingComunicado && id) {
+        const result = await updateComunicado(id, comunicadoData, imageFile || undefined);
+        if (result) success = true;
     } else {
-      alert('Falha ao criar comunicado. Tente novamente.');
+        const result = await createComunicado(comunicadoData as Omit<Comunicado, 'id' | 'data_publicacao' | 'ativo'>, imageFile || undefined);
+        if (result) success = true;
+    }
+
+    if (success) {
+        alert(`Comunicado ${isEditingComunicado ? 'atualizado' : 'criado'} com sucesso!`);
+        setIsComunicadoModalOpen(false);
+        loadComunicados();
+    } else {
+        alert('Ocorreu um erro. Tente novamente.');
     }
     setIsSubmitting(false);
+  };
+  
+  const handleComunicadoDelete = async (id: string, imagem_url?: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este comunicado?')) {
+      const success = await deleteComunicado(id, imagem_url);
+      if (success) {
+        alert('Comunicado excluído com sucesso!');
+        loadComunicados();
+      } else {
+        alert('Falha ao excluir o comunicado.');
+      }
+    }
   };
 
   const openFaqModal = (faq?: Faq) => {
@@ -299,13 +346,29 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
 
   const ComunicadosContent = () => (
     <div>
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Gerenciar Comunicados</h2>
-      <button onClick={() => setIsComunicadoModalOpen(true)} className="bg-brandGreen text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow-md">
-        <PlusCircle size={20} /> Criar Novo Comunicado
-      </button>
-      <div className="mt-8 bg-gray-100 p-6 rounded-lg">
-        <h3 className="font-semibold text-lg text-gray-700">Em breve</h3>
-        <p className="text-gray-600 mt-2">Aqui você poderá ver, editar e apagar os comunicados existentes.</p>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Gerenciar Comunicados</h2>
+        <button onClick={() => openComunicadoModal()} className="bg-brandGreen text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark transition-colors shadow-md">
+          <PlusCircle size={20} /> Criar Novo Comunicado
+        </button>
+      </div>
+       <div className="space-y-4">
+        {loadingComunicados ? (
+          Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
+        ) : comunicados.map(comunicado => (
+          <div key={comunicado.id} className="bg-gray-50 p-4 rounded-lg flex justify-between items-center border">
+            <div>
+              <p className="font-semibold text-gray-800">{comunicado.titulo}</p>
+              <p className="text-sm text-gray-500">
+                {new Date(comunicado.data_publicacao).toLocaleDateString('pt-BR', {timeZone: 'UTC'})} - <span className="font-medium">{comunicado.categoria}</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <button onClick={() => openComunicadoModal(comunicado)} className="text-blue-600 hover:text-blue-800"><Edit size={20}/></button>
+              <button onClick={() => handleComunicadoDelete(comunicado.id, comunicado.imagem_url)} className="text-red-600 hover:text-red-800"><Trash2 size={20}/></button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -480,10 +543,43 @@ const AdminPage: React.FC<AdminPageProps> = ({ onLogout }) => {
         </form>
       </Modal>
 
-      {/* Modal para criar comunicado */}
-      <Modal isOpen={isComunicadoModalOpen} onClose={() => setIsComunicadoModalOpen(false)} title="Criar Novo Comunicado">
-        <form onSubmit={handleCreateComunicadoSubmit} className="space-y-6">
-          {/* ... campos do formulário de comunicado ... */}
+      {/* Modal para criar/editar comunicado */}
+      <Modal isOpen={isComunicadoModalOpen} onClose={() => setIsComunicadoModalOpen(false)} title={isEditingComunicado ? 'Editar Comunicado' : 'Criar Novo Comunicado'}>
+        <form onSubmit={handleComunicadoSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="comunicado-titulo" className="block text-sm font-medium text-gray-700">Título</label>
+            <input type="text" id="comunicado-titulo" required value={currentComunicado.titulo || ''} onChange={(e) => setCurrentComunicado({...currentComunicado, titulo: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen" />
+          </div>
+          <div>
+            <label htmlFor="comunicado-conteudo" className="block text-sm font-medium text-gray-700">Conteúdo</label>
+            <textarea id="comunicado-conteudo" rows={5} required value={currentComunicado.conteudo || ''} onChange={(e) => setCurrentComunicado({...currentComunicado, conteudo: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen"></textarea>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+                <label htmlFor="comunicado-categoria" className="block text-sm font-medium text-gray-700">Categoria</label>
+                <select id="comunicado-categoria" required value={currentComunicado.categoria || 'Informativo'} onChange={(e) => setCurrentComunicado({...currentComunicado, categoria: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen">
+                  <option>Informativo</option>
+                  <option>Urgente</option>
+                  <option>Evento</option>
+                  <option>Manutenção</option>
+                  <option>Aviso</option>
+                </select>
+            </div>
+             <div>
+                <label htmlFor="comunicado-autor" className="block text-sm font-medium text-gray-700">Autor</label>
+                <input type="text" id="comunicado-autor" required value={currentComunicado.autor || 'Administração'} onChange={(e) => setCurrentComunicado({...currentComunicado, autor: e.target.value})} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brandGreen focus:border-brandGreen" />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="comunicado-imagem" className="block text-sm font-medium text-gray-700">Imagem (Opcional)</label>
+            <input type="file" id="comunicado-imagem" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
+          </div>
+           <div className="pt-4 flex justify-end gap-3">
+            <button type="button" onClick={() => setIsComunicadoModalOpen(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors">Cancelar</button>
+            <button type="submit" disabled={isSubmitting} className="bg-brandGreen text-white px-4 py-2 rounded-md hover:bg-brandGreen-dark transition-colors disabled:bg-gray-400">
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
         </form>
       </Modal>
 

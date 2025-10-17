@@ -18,7 +18,7 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const comunicadosData = await getComunicados(3);
+      const comunicadosData = await getComunicados({ limit: 3 });
       setComunicados(comunicadosData);
       setLoading(false);
     };
