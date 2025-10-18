@@ -1,7 +1,7 @@
 import React from 'react';
 import { icons, LucideProps } from 'lucide-react';
 
-// FIX: Update IconProps to extend LucideProps. This allows passing props like 'size' and 'className' to the underlying Lucide icon, fixing type errors.
+// FIX: The IconProps interface now extends LucideProps. This allows passing standard Lucide icon properties like 'size' and 'className' directly to the Icon component, which resolves the type errors.
 interface IconProps extends LucideProps {
   name: string;
 }

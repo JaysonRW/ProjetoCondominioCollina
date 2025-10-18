@@ -26,7 +26,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coupons, setCoupons] = useState<Partial<Cupom>[]>([]);
-  const [newCoupon, setNewCoupon] = useState({ titulo: '', codigo: '', descricao: '' });
+  const [newCoupon, setNewCoupon] = useState({ titulo: '', codigo: '', descricao: '', data_validade: '' });
   
   useEffect(() => {
     async function loadCategorias() {
@@ -81,11 +81,11 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
   };
   
   const handleAddCoupon = () => {
-    if (newCoupon.titulo && newCoupon.codigo && newCoupon.descricao) {
+    if (newCoupon.titulo && newCoupon.codigo && newCoupon.descricao && newCoupon.data_validade) {
         setCoupons([...coupons, { ...newCoupon }]);
-        setNewCoupon({ titulo: '', codigo: '', descricao: '' });
+        setNewCoupon({ titulo: '', codigo: '', descricao: '', data_validade: '' });
     } else {
-        alert('Por favor, preencha o título, o código e a descrição do cupom.');
+        alert('Por favor, preencha todos os campos do cupom, incluindo a data de validade.');
     }
   };
 
@@ -131,6 +131,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
                     codigo: newC.codigo!,
                     descricao: newC.descricao!,
                     anunciante_id: savedAnunciante.id,
+                    data_validade: newC.data_validade!,
                 }));
             }
         }
@@ -303,36 +304,47 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
       <FormSection title="Cupons de Desconto">
           <div className="space-y-2">
               {coupons.length > 0 && coupons.map((cupom, index) => (
-                  <div key={cupom.id || `new-${index}`} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
+                  <div key={cupom.id || `new-${index}`} className="flex items-start justify-between bg-gray-100 p-3 rounded-md">
                       <div>
                           <p className="font-semibold text-gray-800">{cupom.titulo}</p>
                           <p className="font-bold text-brandGreen">{cupom.codigo}</p>
                           <p className="text-gray-600">{cupom.descricao}</p>
+                          {cupom.data_validade && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Válido até: {new Date(cupom.data_validade).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                            </p>
+                          )}
                       </div>
-                      <button type="button" onClick={() => handleRemoveCoupon(index)} className="text-red-500 hover:text-red-700 p-1">
+                      <button type="button" onClick={() => handleRemoveCoupon(index)} className="text-red-500 hover:text-red-700 p-1 flex-shrink-0">
                           <Trash2 size={16} />
                       </button>
                   </div>
               ))}
           </div>
           <div className="mt-4 border-t pt-4">
-            <div className="mb-2">
-                <label htmlFor="cupom-titulo" className="block font-medium text-gray-700">Título do Cupom</label>
-                <input id="cupom-titulo" type="text" value={newCoupon.titulo} onChange={e => setNewCoupon(c => ({...c, titulo: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-            </div>
-            <div className="flex items-end gap-2">
-                <div className="flex-1">
-                    <label htmlFor="cupom-codigo" className="block font-medium text-gray-700">Código</label>
-                    <input id="cupom-codigo" type="text" value={newCoupon.codigo} onChange={e => setNewCoupon(c => ({...c, codigo: e.target.value.toUpperCase()}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                </div>
-                <div className="flex-1">
-                    <label htmlFor="cupom-descricao" className="block font-medium text-gray-700">Descrição</label>
-                    <input id="cupom-descricao" type="text" value={newCoupon.descricao} onChange={e => setNewCoupon(c => ({...c, descricao: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                </div>
-                <button type="button" onClick={handleAddCoupon} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 h-10 flex-shrink-0">
-                    Adicionar
-                </button>
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                  <div>
+                      <label htmlFor="cupom-titulo" className="block font-medium text-gray-700">Título do Cupom</label>
+                      <input id="cupom-titulo" type="text" value={newCoupon.titulo} onChange={e => setNewCoupon(c => ({...c, titulo: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                  </div>
+                  <div>
+                      <label htmlFor="cupom-codigo" className="block font-medium text-gray-700">Código</label>
+                      <input id="cupom-codigo" type="text" value={newCoupon.codigo} onChange={e => setNewCoupon(c => ({...c, codigo: e.target.value.toUpperCase()}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                  </div>
+                  <div className="md:col-span-2">
+                      <label htmlFor="cupom-descricao" className="block font-medium text-gray-700">Descrição</label>
+                      <input id="cupom-descricao" type="text" value={newCoupon.descricao} onChange={e => setNewCoupon(c => ({...c, descricao: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                  </div>
+                  <div>
+                      <label htmlFor="cupom-validade" className="block font-medium text-gray-700">Data de Validade</label>
+                      <input id="cupom-validade" type="date" value={newCoupon.data_validade} onChange={e => setNewCoupon(c => ({...c, data_validade: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                  </div>
+              </div>
+              <div className="flex justify-end">
+                  <button type="button" onClick={handleAddCoupon} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 h-10">
+                      Adicionar
+                  </button>
+              </div>
           </div>
       </FormSection>
       

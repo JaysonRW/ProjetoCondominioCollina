@@ -1,4 +1,3 @@
-
 export interface Comunicado {
   id: string;
   titulo: string;
@@ -23,6 +22,7 @@ export interface Cupom {
   codigo: string;
   descricao: string;
   anunciante_id: string;
+  data_validade: string;
 }
 
 export interface Anunciante {
