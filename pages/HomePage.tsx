@@ -55,11 +55,11 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
   return (
     <div className="bg-gray-50">
       {/* Hero Section */}
-      <section className="relative text-white text-left py-24 md:py-40 bg-cover bg-center" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1920&auto=format&fit=crop')` }}>
+      <section className="relative text-white text-left py-20 sm:py-24 md:py-32 bg-cover bg-center" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1920&auto=format&fit=crop')` }}>
         <div className="absolute inset-0 bg-brandGreen-dark opacity-70"></div>
         <div className="relative max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
-                <h1 className="text-4xl md:text-6xl font-display font-bold mb-4">Portal de Transparência</h1>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-bold mb-4">Portal de Transparência</h1>
                 <p className="text-lg md:text-xl mb-8">Bem-vindo ao portal oficial do condomínio Collina Belvedere</p>
                 <button onClick={() => setCurrentPage('comunicados')} className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all transform hover:scale-105 inline-flex items-center gap-2">
                     Ver Comunicados <ExternalLink size={20} />

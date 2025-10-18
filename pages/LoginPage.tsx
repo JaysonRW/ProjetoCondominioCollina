@@ -37,7 +37,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-148px)] bg-gray-100 p-4">
+    <div className="flex items-center justify-center min-h-[calc(100vh-148px)] bg-gray-50 p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 space-y-6">
         <div className="text-center">
             <img src={logoUrl} alt="Logo" className="mx-auto h-16 mb-4" />

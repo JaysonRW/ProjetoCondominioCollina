@@ -55,11 +55,11 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, adminType 
     return (
         <header className="bg-brandGreen-dark text-white sticky top-0 z-50 shadow-lg">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
+                <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <div className="flex-shrink-0">
                         <a href="#home" onClick={() => setCurrentPage('home')} className="flex items-center gap-2">
-                             <img src={logoUrl} alt="Collina Belvedere Logo" className="h-12" />
+                             <img src={logoUrl} alt="Collina Belvedere Logo" className="h-10" />
                         </a>
                     </div>
 

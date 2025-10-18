@@ -54,14 +54,14 @@ const DocumentosPage: React.FC = () => {
     <>
       <section className="py-16 bg-brandGreen-dark">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-extrabold text-white font-display">Central de Documentos</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Central de Documentos</h1>
           <p className="mt-4 text-lg text-white/90">
             Acesse atas de reunião, regulamentos, balancetes e outros documentos importantes.
           </p>
         </div>
       </section>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12 -mt-12">
         <div className="bg-white p-4 rounded-lg shadow-md mb-8 sticky top-24 z-30 flex flex-col md:flex-row gap-4">
           <div className="relative w-full md:flex-grow">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />

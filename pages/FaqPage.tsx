@@ -44,7 +44,7 @@ const FaqPage: React.FC = () => {
       {/* Header Section */}
       <section className="py-16" style={{ background: 'linear-gradient(135deg, #3E594D 0%, #A3C168 100%)' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-extrabold text-white font-display">Perguntas Frequentes (FAQ)</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Perguntas Frequentes (FAQ)</h1>
           <p className="mt-4 text-lg text-white/90">
             Encontre respostas para as dúvidas mais comuns sobre o condomínio.
           </p>
@@ -52,7 +52,7 @@ const FaqPage: React.FC = () => {
       </section>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12 -mt-12">
         {/* Search Bar */}
         <div className="relative mb-8">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={22} />
