@@ -38,7 +38,14 @@ const CategoryManager: React.FC<{onClose: () => void, onUpdate: () => void}> = (
         e.preventDefault();
         if (!newCategory.nome) return;
         try {
-            const success = await createCategoria(newCategory);
+            const slug = newCategory.nome
+              .toLowerCase()
+              .trim()
+              .replace(/\s+/g, '-')
+              .replace(/[^\w\-]+/g, '')
+              .replace(/\-\-+/g, '-');
+            
+            const success = await createCategoria({ ...newCategory, slug });
             if (success) {
                 setNewCategory({ nome: '', cor: '#3E594D', icone: 'Store', ordem: 0 });
                 loadCategories();
@@ -114,11 +121,11 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
   }, [loadCategorias]);
 
   useEffect(() => {
-    const defaultData = {
+    const defaultData: Partial<Anunciante> = {
         nome_empresa: '',
         descricao: '',
         descricao_curta: '',
-        plano: 'bronze' as Anunciante['plano'],
+        plano: 'bronze',
         valor_mensal: 200,
         categoria_id: categorias.length > 0 ? categorias[0].id : '',
         endereco: '',
@@ -151,6 +158,12 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
     setBannerFile(null);
 
   }, [anunciante, categorias]);
+  
+  useEffect(() => {
+    if (formData.plano === 'morador') {
+      setFormData(prev => ({ ...prev, valor_mensal: 0 }));
+    }
+  }, [formData.plano]);
 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -313,6 +326,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
               <div>
                 <label htmlFor="plano" className="block font-medium text-gray-700">Plano</label>
                 <select name="plano" id="plano" value={formData.plano || 'bronze'} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen">
+                  <option value="morador">Morador</option>
                   <option value="bronze">Bronze</option>
                   <option value="prata">Prata</option>
                   <option value="ouro">Ouro</option>
@@ -320,7 +334,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
               </div>
                <div>
                 <label htmlFor="valor_mensal" className="block font-medium text-gray-700">Valor (R$)</label>
-                <input type="number" name="valor_mensal" id="valor_mensal" value={formData.valor_mensal || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
+                <input type="number" name="valor_mensal" id="valor_mensal" value={formData.valor_mensal || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen disabled:bg-gray-200" required disabled={formData.plano === 'morador'} />
               </div>
                <div>
                 <label htmlFor="comissao_gestor" className="block font-medium text-gray-700">Comissão Gestor (%)</label>

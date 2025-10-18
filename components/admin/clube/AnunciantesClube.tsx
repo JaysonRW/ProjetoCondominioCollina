@@ -16,7 +16,7 @@ const AnunciantesClube: React.FC<AnunciantesClubeProps> = ({ refreshKey, onEditA
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos'); // todos, ativos, inativos
-  const [planoFilter, setPlanoFilter] = useState('todos'); // todos, bronze, prata, ouro
+  const [planoFilter, setPlanoFilter] = useState('todos'); // todos, bronze, prata, ouro, morador
 
   const loadAnunciantes = useCallback(async () => {
     setLoading(true);
@@ -82,6 +82,7 @@ const AnunciantesClube: React.FC<AnunciantesClubeProps> = ({ refreshKey, onEditA
         <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-medium mr-2">Plano:</p>
             <FilterButton value="todos" currentFilter={planoFilter} setFilter={setPlanoFilter}>Todos</FilterButton>
+            <FilterButton value="morador" currentFilter={planoFilter} setFilter={setPlanoFilter}>Morador</FilterButton>
             <FilterButton value="bronze" currentFilter={planoFilter} setFilter={setPlanoFilter}>Bronze</FilterButton>
             <FilterButton value="prata" currentFilter={planoFilter} setFilter={setPlanoFilter}>Prata</FilterButton>
             <FilterButton value="ouro" currentFilter={planoFilter} setFilter={setPlanoFilter}>Ouro</FilterButton>

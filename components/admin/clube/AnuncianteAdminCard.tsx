@@ -13,8 +13,9 @@ const PlanoBadge: React.FC<{ plano: Anunciante['plano'] }> = ({ plano }) => {
         bronze: 'bg-orange-100 text-orange-800',
         prata: 'bg-gray-200 text-gray-800',
         ouro: 'bg-yellow-100 text-yellow-800',
+        morador: 'bg-emerald-100 text-emerald-800',
     };
-    return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${styles[plano]}`}>{plano}</span>;
+    return <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${styles[plano]}`}>{plano}</span>;
 };
 
 

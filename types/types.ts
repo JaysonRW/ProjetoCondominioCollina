@@ -15,6 +15,7 @@ export interface Categoria {
   cor: string;
   icone: string;
   ordem: number;
+  slug: string;
 }
 
 export interface Cupom {
@@ -33,7 +34,7 @@ export interface Anunciante {
   descricao_curta?: string;
   logo_url: string;
   banner_url?: string;
-  plano: 'bronze' | 'prata' | 'ouro';
+  plano: 'bronze' | 'prata' | 'ouro' | 'morador';
   valor_mensal: number;
   categoria_id: string;
   categorias_anunciantes: Categoria; 
