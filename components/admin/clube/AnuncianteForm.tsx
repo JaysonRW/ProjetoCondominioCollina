@@ -21,7 +21,7 @@ const FormSection: React.FC<{title: string, children: React.ReactNode}> = ({ tit
 const CategoryManager: React.FC<{onClose: () => void, onUpdate: () => void}> = ({ onClose, onUpdate }) => {
     const [categories, setCategories] = useState<Categoria[]>([]);
     const [loading, setLoading] = useState(true);
-    const [newCategory, setNewCategory] = useState({ nome: '', cor: '#3E594D', icone: 'Store' });
+    const [newCategory, setNewCategory] = useState({ nome: '', cor: '#3E594D', icone: 'Store', ordem: 0 });
 
     const loadCategories = useCallback(async () => {
         setLoading(true);
@@ -37,13 +37,15 @@ const CategoryManager: React.FC<{onClose: () => void, onUpdate: () => void}> = (
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newCategory.nome) return;
-        const success = await createCategoria(newCategory);
-        if (success) {
-            setNewCategory({ nome: '', cor: '#3E594D', icone: 'Store' });
-            loadCategories();
-            onUpdate();
-        } else {
-            alert('Falha ao criar categoria.');
+        try {
+            const success = await createCategoria(newCategory);
+            if (success) {
+                setNewCategory({ nome: '', cor: '#3E594D', icone: 'Store', ordem: 0 });
+                loadCategories();
+                onUpdate();
+            }
+        } catch (err: any) {
+            alert(`Falha ao criar categoria: ${err.message || 'Erro desconhecido'}`);
         }
     };
     

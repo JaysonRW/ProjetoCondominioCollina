@@ -268,7 +268,7 @@ export const createCategoria = async (catData: Omit<Categoria, 'id'>): Promise<C
     const { data, error } = await supabase.from('categorias_anunciantes').insert([catData]).select().single();
     if (error) {
         console.error('Error creating categoria:', error);
-        return null;
+        throw error;
     }
     return data;
 };

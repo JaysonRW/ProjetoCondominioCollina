@@ -14,6 +14,7 @@ export interface Categoria {
   nome: string;
   cor: string;
   icone: string;
+  ordem: number;
 }
 
 export interface Cupom {
