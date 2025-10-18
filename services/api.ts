@@ -246,8 +246,8 @@ export const deleteImagemGaleria = async (id: string, imageUrl: string): Promise
     return true;
 };
 
-// ANUNCIANTES API
-// Public view
+// ANUNCIANTES E CATEGORIAS API
+
 export const getAnunciantes = async (): Promise<Anunciante[]> => {
     const { data, error } = await supabase
         .from('anunciantes')
@@ -259,10 +259,46 @@ export const getAnunciantes = async (): Promise<Anunciante[]> => {
 };
 
 export const getCategorias = async (): Promise<Categoria[]> => {
-    const { data, error } = await supabase.from('categorias_anunciantes').select('*');
+    const { data, error } = await supabase.from('categorias_anunciantes').select('*').order('nome');
     if (error) console.error('Error fetching categorias:', error);
     return data || [];
 };
+
+export const createCategoria = async (catData: Omit<Categoria, 'id'>): Promise<Categoria | null> => {
+    const { data, error } = await supabase.from('categorias_anunciantes').insert([catData]).select().single();
+    if (error) {
+        console.error('Error creating categoria:', error);
+        return null;
+    }
+    return data;
+};
+
+export const deleteCategoria = async (id: string): Promise<boolean> => {
+    // Check if any anunciante is using this category
+    const { data: anunciantes, error: fetchError } = await supabase
+        .from('anunciantes')
+        .select('id')
+        .eq('categoria_id', id)
+        .limit(1);
+
+    if (fetchError) {
+        console.error('Error checking for anunciantes in category:', fetchError);
+        return false;
+    }
+
+    if (anunciantes && anunciantes.length > 0) {
+        alert('Não é possível excluir esta categoria pois ela já está sendo utilizada por um ou mais anunciantes.');
+        return false;
+    }
+
+    const { error } = await supabase.from('categorias_anunciantes').delete().eq('id', id);
+    if (error) {
+        console.error('Error deleting categoria:', error);
+        return false;
+    }
+    return true;
+};
+
 
 export const trackAnuncianteView = async (id: string) => {
     const { error } = await supabase.rpc('increment_view_count', { anunciante_id: id });
