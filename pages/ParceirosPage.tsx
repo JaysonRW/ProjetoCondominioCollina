@@ -12,7 +12,6 @@ const PlanoBadge: React.FC<{ plano: Anunciante['plano'] }> = ({ plano }) => {
         bronze: { bg: 'bg-orange-100', text: 'text-orange-800', icon: <ShieldCheck size={14} /> },
         prata: { bg: 'bg-gray-200', text: 'text-gray-800', icon: <Star size={14} /> },
         ouro: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: <Gem size={14} /> },
-        morador: { bg: 'bg-emerald-100', text: 'text-emerald-800', icon: <Home size={14} /> },
     };
     const style = styles[plano] || styles.bronze;
     return (
@@ -30,7 +29,7 @@ interface AnuncianteCardProps {
 }
 
 const AnuncianteCard: React.FC<AnuncianteCardProps> = ({ anunciante, onDetailsClick, onActionClick }) => {
-    const isMorador = anunciante.plano === 'morador';
+    const isMorador = anunciante.valor_mensal === 0;
 
     if (isMorador) {
         return (

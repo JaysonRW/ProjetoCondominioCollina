@@ -34,7 +34,7 @@ export interface Anunciante {
   descricao_curta?: string;
   logo_url: string;
   banner_url?: string;
-  plano: 'bronze' | 'prata' | 'ouro' | 'morador';
+  plano: 'bronze' | 'prata' | 'ouro'; // 'morador' é um conceito de UI representado por valor_mensal = 0
   valor_mensal: number;
   categoria_id: string;
   categorias_anunciantes: Categoria; 

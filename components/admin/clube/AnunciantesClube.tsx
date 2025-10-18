@@ -33,7 +33,17 @@ const AnunciantesClube: React.FC<AnunciantesClubeProps> = ({ refreshKey, onEditA
     return anunciantes.filter(anunciante => {
       const matchesSearch = anunciante.nome_empresa.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'todos' || (statusFilter === 'ativos' && anunciante.ativo) || (statusFilter === 'inativos' && !anunciante.ativo);
-      const matchesPlano = planoFilter === 'todos' || anunciante.plano === planoFilter;
+      
+      let matchesPlano = true;
+      if (planoFilter !== 'todos') {
+          if (planoFilter === 'morador') {
+              matchesPlano = anunciante.valor_mensal === 0;
+          } else {
+              // For regular plans, also ensure they are not the free "morador" ones
+              matchesPlano = anunciante.plano === planoFilter && anunciante.valor_mensal > 0;
+          }
+      }
+
       return matchesSearch && matchesStatus && matchesPlano;
     });
   }, [anunciantes, searchTerm, statusFilter, planoFilter]);

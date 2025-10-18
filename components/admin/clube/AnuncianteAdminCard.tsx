@@ -8,14 +8,15 @@ interface AnuncianteAdminCardProps {
     onDelete: (anunciante: Anunciante) => void;
 }
 
-const PlanoBadge: React.FC<{ plano: Anunciante['plano'] }> = ({ plano }) => {
+const PlanoBadge: React.FC<{ plano: Anunciante['plano'] | 'morador' }> = ({ plano }) => {
     const styles = {
         bronze: 'bg-orange-100 text-orange-800',
         prata: 'bg-gray-200 text-gray-800',
         ouro: 'bg-yellow-100 text-yellow-800',
         morador: 'bg-emerald-100 text-emerald-800',
     };
-    return <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${styles[plano]}`}>{plano}</span>;
+    const styleKey = plano as keyof typeof styles;
+    return <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${styles[styleKey]}`}>{plano}</span>;
 };
 
 
@@ -30,7 +31,7 @@ const AnuncianteAdminCard: React.FC<AnuncianteAdminCardProps> = ({ anunciante, o
                     <span className={`w-3 h-3 rounded-full ${anunciante.ativo ? 'bg-green-500' : 'bg-red-500'}`} title={anunciante.ativo ? 'Ativo' : 'Inativo'}></span>
                 </p>
                 <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                    <PlanoBadge plano={anunciante.plano} />
+                    <PlanoBadge plano={anunciante.valor_mensal === 0 ? 'morador' : anunciante.plano} />
                     <span>|</span>
                     <span>{anunciante.categorias_anunciantes?.nome || 'Sem categoria'}</span>
                     <span>|</span>
