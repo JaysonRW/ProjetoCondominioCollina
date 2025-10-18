@@ -26,7 +26,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [coupons, setCoupons] = useState<Partial<Cupom>[]>([]);
-  const [newCoupon, setNewCoupon] = useState({ codigo: '', descricao: '' });
+  const [newCoupon, setNewCoupon] = useState({ titulo: '', codigo: '', descricao: '' });
   
   useEffect(() => {
     async function loadCategorias() {
@@ -81,11 +81,11 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
   };
   
   const handleAddCoupon = () => {
-    if (newCoupon.codigo && newCoupon.descricao) {
+    if (newCoupon.titulo && newCoupon.codigo && newCoupon.descricao) {
         setCoupons([...coupons, { ...newCoupon }]);
-        setNewCoupon({ codigo: '', descricao: '' });
+        setNewCoupon({ titulo: '', codigo: '', descricao: '' });
     } else {
-        alert('Por favor, preencha o código e a descrição do cupom.');
+        alert('Por favor, preencha o título, o código e a descrição do cupom.');
     }
   };
 
@@ -127,6 +127,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
         for (const newC of coupons) {
             if (!newC.id) { // New coupons don't have an ID
                 couponPromises.push(createCupom({
+                    titulo: newC.titulo!,
                     codigo: newC.codigo!,
                     descricao: newC.descricao!,
                     anunciante_id: savedAnunciante.id,
@@ -304,6 +305,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
               {coupons.length > 0 && coupons.map((cupom, index) => (
                   <div key={cupom.id || `new-${index}`} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
                       <div>
+                          <p className="font-semibold text-gray-800">{cupom.titulo}</p>
                           <p className="font-bold text-brandGreen">{cupom.codigo}</p>
                           <p className="text-gray-600">{cupom.descricao}</p>
                       </div>
@@ -313,18 +315,24 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
                   </div>
               ))}
           </div>
-          <div className="flex items-end gap-2 mt-4">
-              <div className="flex-1">
-                  <label className="block font-medium text-gray-700">Código do Cupom</label>
-                  <input type="text" value={newCoupon.codigo} onChange={e => setNewCoupon(c => ({...c, codigo: e.target.value.toUpperCase()}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-              </div>
-              <div className="flex-1">
-                  <label className="block font-medium text-gray-700">Descrição</label>
-                  <input type="text" value={newCoupon.descricao} onChange={e => setNewCoupon(c => ({...c, descricao: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-              </div>
-              <button type="button" onClick={handleAddCoupon} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 h-10">
-                  Adicionar
-              </button>
+          <div className="mt-4 border-t pt-4">
+            <div className="mb-2">
+                <label htmlFor="cupom-titulo" className="block font-medium text-gray-700">Título do Cupom</label>
+                <input id="cupom-titulo" type="text" value={newCoupon.titulo} onChange={e => setNewCoupon(c => ({...c, titulo: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+            </div>
+            <div className="flex items-end gap-2">
+                <div className="flex-1">
+                    <label htmlFor="cupom-codigo" className="block font-medium text-gray-700">Código</label>
+                    <input id="cupom-codigo" type="text" value={newCoupon.codigo} onChange={e => setNewCoupon(c => ({...c, codigo: e.target.value.toUpperCase()}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                </div>
+                <div className="flex-1">
+                    <label htmlFor="cupom-descricao" className="block font-medium text-gray-700">Descrição</label>
+                    <input id="cupom-descricao" type="text" value={newCoupon.descricao} onChange={e => setNewCoupon(c => ({...c, descricao: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                </div>
+                <button type="button" onClick={handleAddCoupon} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 h-10 flex-shrink-0">
+                    Adicionar
+                </button>
+            </div>
           </div>
       </FormSection>
       

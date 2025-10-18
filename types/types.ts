@@ -1,3 +1,4 @@
+
 export interface Comunicado {
   id: string;
   titulo: string;
@@ -18,6 +19,7 @@ export interface Categoria {
 
 export interface Cupom {
   id: string;
+  titulo: string;
   codigo: string;
   descricao: string;
   anunciante_id: string;
