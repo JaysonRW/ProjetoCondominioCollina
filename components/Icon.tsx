@@ -1,9 +1,12 @@
 import React from 'react';
-import { icons, LucideProps } from 'lucide-react';
+import { icons } from 'lucide-react';
 
-// FIX: The IconProps interface now extends LucideProps. This allows passing standard Lucide icon properties like 'size' and 'className' directly to the Icon component, which resolves the type errors.
-interface IconProps extends LucideProps {
+// FIX: Inlined LucideProps definition to fix type inheritance issue.
+// This ensures 'size', 'className', and other SVG attributes are available on IconProps.
+interface IconProps extends React.SVGAttributes<SVGSVGElement> {
   name: string;
+  size?: string | number;
+  absoluteStrokeWidth?: boolean;
 }
 
 const Icon: React.FC<IconProps> = ({ name, ...props }) => {

@@ -5,7 +5,7 @@ import { Anunciante, Categoria, Cupom } from '../types/types';
 import Modal from '../components/Modal';
 import Icon from '../components/Icon';
 import { AnuncianteCardSkeleton } from '../components/Skeleton';
-import { Search, MapPin, Phone, Mail, Globe, Instagram, Ticket, Star, ShieldCheck, Gem } from 'lucide-react';
+import { Search, MapPin, Phone, Mail, Globe, Instagram, Ticket, Star, ShieldCheck, Gem, Home } from 'lucide-react';
 
 const PlanoBadge: React.FC<{ plano: Anunciante['plano'] }> = ({ plano }) => {
     const styles = {
@@ -22,30 +22,73 @@ const PlanoBadge: React.FC<{ plano: Anunciante['plano'] }> = ({ plano }) => {
     );
 };
 
-const AnuncianteCard: React.FC<{ anunciante: Anunciante; onDetailsClick: (anunciante: Anunciante) => void }> = ({ anunciante, onDetailsClick }) => (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col">
-        <div className="p-5 flex-grow">
-            <div className="flex items-center space-x-4">
-                <img className="h-16 w-16 rounded-full object-cover border-2 border-gray-200" src={anunciante.logo_url} alt={anunciante.nome_empresa} />
-                <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{anunciante.nome_empresa}</h3>
-                    <span style={{ backgroundColor: anunciante.categorias_anunciantes.cor + '20', color: anunciante.categorias_anunciantes.cor }} className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium`}>
-                        <Icon name={anunciante.categorias_anunciantes.icone} className="mr-1.5" size={12} /> {anunciante.categorias_anunciantes.nome}
-                    </span>
+interface AnuncianteCardProps {
+    anunciante: Anunciante;
+    onDetailsClick: (anunciante: Anunciante) => void;
+    onActionClick: (id: string, url?: string) => void;
+}
+
+const AnuncianteCard: React.FC<AnuncianteCardProps> = ({ anunciante, onDetailsClick, onActionClick }) => {
+    const isMorador = anunciante.categorias_anunciantes?.nome.toLowerCase() === 'morador';
+
+    if (isMorador) {
+        return (
+            <div className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col relative h-full">
+                 <span className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
+                    <Home size={14} /> MORADOR
+                </span>
+                <div className="p-5 flex-grow flex flex-col">
+                    <div className="flex items-center space-x-4">
+                        <img className="h-16 w-16 object-cover rounded-md border" src={anunciante.logo_url} alt={anunciante.nome_empresa} />
+                        <div className="flex-1">
+                            <h3 className="text-xl font-bold text-blue-900">{anunciante.nome_empresa}</h3>
+                        </div>
+                    </div>
+                     <p className="text-emerald-700 font-semibold mt-3">Apoie seu Vizinho!</p>
+                    <p className="mt-2 text-sm text-gray-600 flex-grow">{anunciante.descricao}</p>
+                </div>
+                <div className="p-4 bg-gray-50 border-t mt-auto">
+                    <a 
+                        href={`https://wa.me/${anunciante.whatsapp}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        onClick={() => onActionClick(anunciante.id, `https://wa.me/${anunciante.whatsapp}`)}
+                        className="w-full text-center bg-emerald-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-emerald-700 transition-colors block"
+                    >
+                        Falar com o Morador
+                    </a>
                 </div>
             </div>
-            <p className="mt-4 text-sm text-gray-600 line-clamp-3 flex-grow">{anunciante.descricao}</p>
-        </div>
-        <div className="p-5 bg-gray-50 border-t">
-             <div className="flex justify-between items-center">
-                 <PlanoBadge plano={anunciante.plano} />
-                <button onClick={() => onDetailsClick(anunciante)} className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
-                    Ver Detalhes
-                </button>
+        );
+    }
+
+    return (
+        <div className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full">
+            <div className="p-5 flex-grow">
+                <div className="flex items-center space-x-4">
+                    <img className="h-16 w-16 rounded-lg object-cover border" src={anunciante.logo_url} alt={anunciante.nome_empresa} />
+                    <div className="flex-1">
+                        <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{anunciante.nome_empresa}</h3>
+                        {anunciante.categorias_anunciantes && (
+                             <span style={{ backgroundColor: anunciante.categorias_anunciantes.cor + '20', color: anunciante.categorias_anunciantes.cor }} className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1`}>
+                                <Icon name={anunciante.categorias_anunciantes.icone as any} className="mr-1.5" size={12} /> {anunciante.categorias_anunciantes.nome}
+                            </span>
+                        )}
+                    </div>
+                </div>
+                <p className="mt-4 text-sm text-gray-600 line-clamp-3 flex-grow">{anunciante.descricao_curta || anunciante.descricao}</p>
+            </div>
+            <div className="p-5 bg-gray-50 border-t mt-auto">
+                 <div className="flex justify-between items-center">
+                     <PlanoBadge plano={anunciante.plano} />
+                    <button onClick={() => onDetailsClick(anunciante)} className="bg-brandGreen text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brandGreen-dark transition-colors">
+                        Ver Detalhes
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 
 const ParceirosPage: React.FC = () => {
@@ -97,7 +140,7 @@ const ParceirosPage: React.FC = () => {
         <div className="bg-gray-50 min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
                 <div className="text-center mb-12">
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 font-display">Parceiros Comerciais</h1>
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 font-display">Clube de Vantagens</h1>
                     <p className="mt-2 text-lg text-gray-600">Apoie o comércio local e aproveite vantagens exclusivas.</p>
                 </div>
 
@@ -107,7 +150,7 @@ const ParceirosPage: React.FC = () => {
                         <input
                             type="text"
                             placeholder="Buscar por nome do parceiro..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-brandGreen focus:border-brandGreen"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
@@ -115,7 +158,7 @@ const ParceirosPage: React.FC = () => {
                     <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => setSelectedCategory('all')}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedCategory === 'all' ? 'bg-brandGreen text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                         >
                             Todos
                         </button>
@@ -123,10 +166,10 @@ const ParceirosPage: React.FC = () => {
                             <button
                                 key={cat.id}
                                 onClick={() => setSelectedCategory(cat.id)}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${selectedCategory === cat.id ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                style={selectedCategory === cat.id ? {} : {backgroundColor: cat.cor + '20', color: cat.cor}}
+                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${selectedCategory === cat.id ? 'text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                style={selectedCategory === cat.id ? {backgroundColor: cat.cor, color: 'white'} : {backgroundColor: cat.cor + '20', color: cat.cor}}
                             >
-                                <Icon name={cat.icone} size={14} /> {cat.nome}
+                                <Icon name={cat.icone as any} size={14} /> {cat.nome}
                             </button>
                         ))}
                     </div>
@@ -137,7 +180,7 @@ const ParceirosPage: React.FC = () => {
                         Array.from({ length: 9 }).map((_, index) => <AnuncianteCardSkeleton key={index} />)
                     ) : (
                         filteredAnunciantes.map(anunciante => (
-                            <AnuncianteCard key={anunciante.id} anunciante={anunciante} onDetailsClick={handleDetailsClick} />
+                            <AnuncianteCard key={anunciante.id} anunciante={anunciante} onDetailsClick={handleDetailsClick} onActionClick={handleActionClick} />
                         ))
                     )}
                 </div>
@@ -161,9 +204,9 @@ const ParceirosPage: React.FC = () => {
                     <p className="text-gray-700 mb-6">{selectedAnunciante.descricao}</p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
-                        {selectedAnunciante.endereco && <div className="flex items-start"><MapPin className="text-primary mt-1 mr-3 flex-shrink-0" size={18} /><span>{selectedAnunciante.endereco}</span></div>}
-                        {selectedAnunciante.telefone && <div className="flex items-center"><Phone className="text-primary mr-3 flex-shrink-0" size={18} /><span>{selectedAnunciante.telefone}</span></div>}
-                        {selectedAnunciante.email && <div className="flex items-center"><Mail className="text-primary mr-3 flex-shrink-0" size={18} /><span>{selectedAnunciante.email}</span></div>}
+                        {selectedAnunciante.endereco && <div className="flex items-start"><MapPin className="text-brandGreen mt-1 mr-3 flex-shrink-0" size={18} /><span>{selectedAnunciante.endereco}</span></div>}
+                        {selectedAnunciante.telefone && <div className="flex items-center"><Phone className="text-brandGreen mr-3 flex-shrink-0" size={18} /><span>{selectedAnunciante.telefone}</span></div>}
+                        {selectedAnunciante.email && <div className="flex items-center"><Mail className="text-brandGreen mr-3 flex-shrink-0" size={18} /><span>{selectedAnunciante.email}</span></div>}
                     </div>
 
                      <div className="flex flex-wrap gap-3 mb-8">
