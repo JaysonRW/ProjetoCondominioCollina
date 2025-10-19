@@ -5,7 +5,7 @@ import { Anunciante, Categoria, Cupom } from '../types/types';
 import Modal from '../components/Modal';
 import Icon from '../components/Icon';
 import { AnuncianteCardSkeleton } from '../components/Skeleton';
-import { Search, MapPin, Phone, Mail, Globe, Instagram, Ticket, Star, ShieldCheck, Gem, Home } from 'lucide-react';
+import { Search, MapPin, Phone, Mail, Globe, Instagram, Ticket, Star, ShieldCheck, Gem, Home, User } from 'lucide-react';
 
 const PlanoBadge: React.FC<{ plano: Anunciante['plano'] }> = ({ plano }) => {
     const styles = {
@@ -112,11 +112,22 @@ const ParceirosPage: React.FC = () => {
 
     const filteredAnunciantes = useMemo(() => {
         return anunciantes.filter(anunciante => {
-            const matchesCategory = selectedCategory === 'all' || anunciante.categoria_id === selectedCategory;
             const matchesSearch = searchTerm === '' || anunciante.nome_empresa.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            let matchesCategory = true;
+            if (selectedCategory === 'all') {
+                matchesCategory = true;
+            } else if (selectedCategory === 'morador') {
+                matchesCategory = anunciante.valor_mensal === 0;
+            } else {
+                matchesCategory = anunciante.categoria_id === selectedCategory;
+            }
+
             return matchesCategory && matchesSearch;
         });
     }, [anunciantes, searchTerm, selectedCategory]);
+
+    const hasMoradores = useMemo(() => anunciantes.some(a => a.valor_mensal === 0), [anunciantes]);
     
     const handleDetailsClick = useCallback((anunciante: Anunciante) => {
         setSelectedAnunciante(anunciante);
@@ -162,6 +173,18 @@ const ParceirosPage: React.FC = () => {
                         >
                             Todos
                         </button>
+                         {hasMoradores && (
+                            <button
+                                onClick={() => setSelectedCategory('morador')}
+                                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors flex items-center gap-2 ${
+                                    selectedCategory === 'morador' 
+                                    ? 'bg-emerald-500 text-white' 
+                                    : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                }`}
+                            >
+                                <Icon name="User" size={14} /> Morador
+                            </button>
+                        )}
                         {categorias.map(cat => (
                             <button
                                 key={cat.id}
