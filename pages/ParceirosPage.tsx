@@ -185,7 +185,9 @@ const ParceirosPage: React.FC = () => {
                                 <User size={14} /> Morador
                             </button>
                         )}
-                        {categorias.map(cat => (
+                        {categorias
+                            .filter(cat => cat.nome !== 'Morador')
+                            .map(cat => (
                             <button
                                 key={cat.id}
                                 onClick={() => setSelectedCategory(cat.id)}
