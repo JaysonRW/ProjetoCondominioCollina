@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Anunciante, Categoria, Cupom } from '../../../types/types';
 import { getCategorias, createAnunciante, updateAnunciante, createCupom, deleteCupom, createCategoria, deleteCategoria } from '../../../services/api';
-import { Trash2, PlusCircle } from 'lucide-react';
+import { Trash2, PlusCircle, User } from 'lucide-react';
 import Modal from '../../Modal';
 import Icon from '../../Icon';
 
@@ -75,7 +75,11 @@ const CategoryManager: React.FC<{onClose: () => void, onUpdate: () => void}> = (
                     <div key={cat.id} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
                         <div className="flex items-center gap-2">
                             <div className="w-4 h-4 rounded-full" style={{backgroundColor: cat.cor}}></div>
-                            <Icon name={cat.icone as any} size={16} style={{color: cat.cor}} />
+                            {cat.nome === 'Morador' ? (
+                                <Icon name="User" size={16} style={{color: cat.cor}} />
+                            ) : (
+                                <Icon name={cat.icone as any} size={16} style={{color: cat.cor}} />
+                            )}
                             <span className="font-medium">{cat.nome}</span>
                         </div>
                         <button type="button" onClick={() => handleDelete(cat.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={16} /></button>
