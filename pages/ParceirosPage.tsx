@@ -179,10 +179,10 @@ const ParceirosPage: React.FC = () => {
                                 className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors flex items-center gap-2 ${
                                     selectedCategory === 'morador' 
                                     ? 'bg-emerald-500 text-white' 
-                                    : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                    : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200'
                                 }`}
                             >
-                                <Icon name="User" size={14} /> Morador
+                                <User size={14} /> Morador
                             </button>
                         )}
                         {categorias.map(cat => (
