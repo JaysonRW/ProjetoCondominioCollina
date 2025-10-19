@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { getComunicados } from '../services/api';
 import { Comunicado } from '../types/types';
-import { ArrowRight, ExternalLink, MessageSquare, FileText, ImageIcon, CalendarDays, Send, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowRight, ExternalLink, MessageSquare, FileText, Store, CalendarDays, Send, Calendar as CalendarIcon } from 'lucide-react';
 import { ComunicadoCardSkeleton } from '../components/Skeleton';
 
 const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCurrentPage }) => {
@@ -41,7 +41,7 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
   const exploreItems = [
     { title: 'Comunicados', description: 'Fique por dentro das novidades e informações importantes.', icon: MessageSquare, color: 'blue', page: 'comunicados' },
     { title: 'Documentos', description: 'Acesse atas, relatórios e regulamentos.', icon: FileText, color: 'green', page: 'documentos' },
-    { title: 'Galeria', description: 'Veja fotos das instalações e eventos.', icon: ImageIcon, color: 'purple', page: 'galeria' },
+    { title: 'Clube de Vantagens', description: 'Descontos e benefícios exclusivos para moradores.', icon: Store, color: 'purple', page: 'parceiros' },
     { title: 'Eventos', description: 'Calendário de eventos e assembleias.', icon: CalendarDays, color: 'yellow', page: 'eventos' }
   ];
   
