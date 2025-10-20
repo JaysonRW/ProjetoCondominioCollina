@@ -64,6 +64,11 @@ const ComunicadosPage: React.FC = () => {
         <div className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 font-display">Mural de Comunicados</h1>
           <p className="mt-2 text-lg text-gray-600">Avisos, eventos e informações importantes do condomínio.</p>
+          {!loading && (
+            <p className="mt-4 text-md text-gray-800 font-medium bg-gray-100 border border-gray-200 inline-block px-4 py-2 rounded-full">
+              <strong>{comunicados.length}</strong> {comunicados.length === 1 ? 'comunicado publicado' : 'comunicados publicados'}
+            </p>
+          )}
         </div>
 
         {/* Filters and Actions */}

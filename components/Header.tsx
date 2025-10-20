@@ -72,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, setCurrentPage, adminType 
                     
                     {/* Mobile Menu Button */}
                     <div className="md:hidden">
-                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:text-brandLime">
+                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white hover:text-brandLime transition-transform duration-200 hover:scale-110">
                             {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
                         </button>
                     </div>

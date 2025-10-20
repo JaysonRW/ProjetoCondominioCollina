@@ -33,7 +33,7 @@ const AnuncianteCard: React.FC<AnuncianteCardProps> = ({ anunciante, onDetailsCl
 
     if (isMorador) {
         return (
-            <div className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col relative h-full">
+            <div className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col relative h-full border-t-4 border-emerald-500">
                  <span className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10">
                     <Home size={14} /> MORADOR
                 </span>
@@ -61,9 +61,16 @@ const AnuncianteCard: React.FC<AnuncianteCardProps> = ({ anunciante, onDetailsCl
             </div>
         );
     }
+    
+    const planoBorders = {
+        bronze: 'border-t-4 border-orange-400',
+        prata: 'border-t-4 border-gray-400',
+        ouro: 'border-t-4 border-yellow-400',
+    };
+    const borderClass = planoBorders[anunciante.plano] || '';
 
     return (
-        <div className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full">
+        <div className={`bg-white rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full ${borderClass}`}>
             <div className="p-5 flex-grow">
                 <div className="flex items-center space-x-4">
                     <img className="h-16 w-16 rounded-lg object-cover border" src={anunciante.logo_url} alt={anunciante.nome_empresa} />
@@ -176,13 +183,13 @@ const ParceirosPage: React.FC = () => {
                          {hasMoradores && (
                             <button
                                 onClick={() => setSelectedCategory('morador')}
-                                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors flex items-center gap-2 ${
+                                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-colors flex items-center gap-2 group ${
                                     selectedCategory === 'morador' 
                                     ? 'bg-emerald-500 text-white' 
                                     : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200'
                                 }`}
                             >
-                                <User size={14} /> Morador
+                                <User size={14} className="transition-transform group-hover:scale-110"/> Morador
                             </button>
                         )}
                         {categorias
@@ -191,10 +198,10 @@ const ParceirosPage: React.FC = () => {
                             <button
                                 key={cat.id}
                                 onClick={() => setSelectedCategory(cat.id)}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${selectedCategory === cat.id ? 'text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 group ${selectedCategory === cat.id ? 'text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                                 style={selectedCategory === cat.id ? {backgroundColor: cat.cor, color: 'white'} : {backgroundColor: cat.cor + '20', color: cat.cor}}
                             >
-                                <Icon name={cat.icone as any} size={14} /> {cat.nome}
+                                <Icon name={cat.icone as any} size={14} className="transition-transform group-hover:scale-110" /> {cat.nome}
                             </button>
                         ))}
                     </div>
@@ -235,9 +242,9 @@ const ParceirosPage: React.FC = () => {
                     </div>
 
                      <div className="flex flex-wrap gap-3 mb-8">
-                        {selectedAnunciante.whatsapp && <button onClick={() => handleActionClick(selectedAnunciante.id, `https://wa.me/${selectedAnunciante.whatsapp}`)} className="flex-1 text-center bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2"><Icon name="MessageCircle" size={18}/>WhatsApp</button>}
-                        {selectedAnunciante.site_url && <button onClick={() => handleActionClick(selectedAnunciante.id, selectedAnunciante.site_url)} className="flex-1 text-center bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"><Globe size={18} />Website</button>}
-                        {selectedAnunciante.instagram && <button onClick={() => handleActionClick(selectedAnunciante.id, `https://instagram.com/${selectedAnunciante.instagram}`)} className="flex-1 text-center bg-pink-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-pink-600 transition-colors flex items-center justify-center gap-2"><Instagram size={18} />Instagram</button>}
+                        {selectedAnunciante.whatsapp && <button onClick={() => handleActionClick(selectedAnunciante.id, `https://wa.me/${selectedAnunciante.whatsapp}`)} className="flex-1 text-center bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2 group"><Icon name="MessageCircle" size={18} className="transition-transform group-hover:scale-110 group-hover:rotate-12"/>WhatsApp</button>}
+                        {selectedAnunciante.site_url && <button onClick={() => handleActionClick(selectedAnunciante.id, selectedAnunciante.site_url)} className="flex-1 text-center bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 group"><Globe size={18} className="transition-transform group-hover:scale-110"/>Website</button>}
+                        {selectedAnunciante.instagram && <button onClick={() => handleActionClick(selectedAnunciante.id, `https://instagram.com/${selectedAnunciante.instagram}`)} className="flex-1 text-center bg-pink-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-pink-600 transition-colors flex items-center justify-center gap-2 group"><Instagram size={18} className="transition-transform group-hover:scale-110"/>Instagram</button>}
                     </div>
 
                     {selectedAnunciante.cupons_desconto && selectedAnunciante.cupons_desconto.length > 0 && (

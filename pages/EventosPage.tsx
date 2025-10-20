@@ -50,7 +50,7 @@ const EventosPage: React.FC = () => {
 
   const EventCard: React.FC<{ evento: Evento }> = ({ evento }) => (
     <div
-      className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer flex flex-col md:flex-row items-stretch"
+      className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer flex flex-col md:flex-row items-stretch group"
       onClick={() => setSelectedEvento(evento)}
     >
       <img
@@ -69,7 +69,7 @@ const EventosPage: React.FC = () => {
         </div>
         <div className="mt-4 flex items-center text-brandGreen font-semibold">
           <span>Ver Detalhes</span>
-          <ChevronRight size={20} />
+          <ChevronRight size={20} className="transition-transform group-hover:translate-x-1.5" />
         </div>
       </div>
     </div>
@@ -131,9 +131,9 @@ const EventosPage: React.FC = () => {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className="flex items-center gap-2 px-4 py-2 bg-brandGreen text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-brandGreen-dark transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-brandGreen text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-brandGreen-dark transition-colors group"
                         >
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={20} className="transition-transform group-hover:-translate-x-1" />
                             Anterior
                         </button>
                         <span className="text-gray-700 font-medium">
@@ -142,10 +142,10 @@ const EventosPage: React.FC = () => {
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage === totalPages}
-                            className="flex items-center gap-2 px-4 py-2 bg-brandGreen text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-brandGreen-dark transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-brandGreen text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-brandGreen-dark transition-colors group"
                         >
                             Próximo
-                            <ChevronRight size={20} />
+                            <ChevronRight size={20} className="transition-transform group-hover:translate-x-1" />
                         </button>
                     </div>
                 )}

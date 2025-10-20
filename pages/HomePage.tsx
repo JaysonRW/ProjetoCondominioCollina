@@ -61,8 +61,8 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
             <div className="max-w-2xl">
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-bold mb-4">Portal de Transparência</h1>
                 <p className="text-lg md:text-xl mb-8">Bem-vindo ao portal oficial do condomínio Collina Belvedere</p>
-                <button onClick={() => setCurrentPage('comunicados')} className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all transform hover:scale-105 inline-flex items-center gap-2">
-                    Ver Comunicados <ExternalLink size={20} />
+                <button onClick={() => setCurrentPage('comunicados')} className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all transform hover:scale-105 inline-flex items-center gap-2 group">
+                    Ver Comunicados <ExternalLink size={20} className="transition-transform group-hover:translate-x-1" />
                 </button>
             </div>
         </div>
@@ -74,8 +74,8 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
           <h2 className="text-3xl font-bold text-center text-brandGreen mb-12 font-display">Explore o Portal</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {exploreItems.map(item => (
-              <a href={`#${item.page}`} onClick={() => setCurrentPage(item.page)} key={item.title} className={`p-6 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 text-center ${exploreColors[item.color as keyof typeof exploreColors].split(' ')[0]}`}>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${exploreColors[item.color as keyof typeof exploreColors]}`}>
+              <a href={`#${item.page}`} onClick={() => setCurrentPage(item.page)} key={item.title} className={`p-6 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 text-center ${exploreColors[item.color as keyof typeof exploreColors].split(' ')[0]} group`}>
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${exploreColors[item.color as keyof typeof exploreColors]} transition-transform duration-300 group-hover:scale-110`}>
                   <item.icon size={32} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">{item.title}</h3>
@@ -106,8 +106,8 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
                             </div>
                             <p className="text-gray-600 line-clamp-3 mb-4">{comunicado.conteudo}</p>
                         </div>
-                        <a href="#comunicados" onClick={() => setCurrentPage('comunicados')} className="font-semibold text-brandGreen hover:text-brandGreen-dark transition-colors flex items-center">
-                            Ler Mais <ArrowRight className="ml-2 h-4 w-4" />
+                        <a href="#comunicados" onClick={() => setCurrentPage('comunicados')} className="font-semibold text-brandGreen hover:text-brandGreen-dark transition-colors flex items-center group">
+                            Ler Mais <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </a>
                     </div>
                 ))
@@ -171,8 +171,8 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
                         <label htmlFor="mensagem" className="block text-gray-700 font-medium mb-1">Mensagem</label>
                         <textarea name="mensagem" id="mensagem" rows={4} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-brandGreen focus:border-brandGreen" onChange={handleInputChange} value={contactForm.mensagem}></textarea>
                     </div>
-                    <button type="submit" className="w-full bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all flex items-center justify-center gap-2">
-                        <Send size={20} /> Enviar via WhatsApp
+                    <button type="submit" className="w-full bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-3 px-8 rounded-md transition-all flex items-center justify-center gap-2 group">
+                        <Send size={20} className="transition-transform group-hover:scale-110 group-hover:rotate-12" /> Enviar via WhatsApp
                     </button>
                 </form>
             </div>

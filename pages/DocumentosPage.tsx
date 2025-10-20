@@ -112,9 +112,9 @@ const DocumentosPage: React.FC = () => {
                   href={doc.url_arquivo}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-2 px-5 rounded-md transition-all inline-flex items-center justify-center gap-2 w-full sm:w-auto flex-shrink-0"
+                  className="bg-brandLime hover:bg-opacity-90 text-brandGreen-dark font-bold py-2 px-5 rounded-md transition-all inline-flex items-center justify-center gap-2 w-full sm:w-auto flex-shrink-0 group"
                 >
-                  <Download size={18} />
+                  <Download size={18} className="transition-transform group-hover:translate-y-0.5" />
                   Baixar
                 </a>
               </div>
