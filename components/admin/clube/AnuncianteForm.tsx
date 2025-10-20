@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Anunciante, Categoria, Cupom } from '../../../types/types';
-import { getCategorias, createAnunciante, updateAnunciante, createCupom, deleteCupom, createCategoria, deleteCategoria } from '../../../services/api';
-import { Trash2, PlusCircle, User } from 'lucide-react';
-import Modal from '../../Modal';
-import Icon from '../../Icon';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Anunciante, Categoria } from '../../../types/types';
+import { getCategorias, createAnunciante, updateAnunciante } from '../../../services/api';
+import { Check, ChevronRight, ChevronLeft, UploadCloud, X } from 'lucide-react';
 
 interface AnuncianteFormProps {
   anunciante: Anunciante | null;
@@ -11,476 +9,337 @@ interface AnuncianteFormProps {
   onCancel: () => void;
 }
 
-const FormSection: React.FC<{title: string, children: React.ReactNode}> = ({ title, children }) => (
-    <div className="pt-4 border-t">
-        <h3 className="text-md font-semibold text-gray-800 mb-3">{title}</h3>
-        {children}
-    </div>
-);
-
-const CategoryManager: React.FC<{onClose: () => void, onUpdate: () => void}> = ({ onClose, onUpdate }) => {
-    const [categories, setCategories] = useState<Categoria[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [newCategory, setNewCategory] = useState({ nome: '', cor: '#3E594D', icone: 'Store', ordem: 0 });
-
-    const loadCategories = useCallback(async () => {
-        setLoading(true);
-        const data = await getCategorias();
-        setCategories(data);
-        setLoading(false);
-    }, []);
-
-    useEffect(() => {
-        loadCategories();
-    }, [loadCategories]);
-
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newCategory.nome) return;
-        try {
-            const slug = newCategory.nome
-              .toLowerCase()
-              .trim()
-              .replace(/\s+/g, '-')
-              .replace(/[^\w\-]+/g, '')
-              .replace(/\-\-+/g, '-');
-            
-            const success = await createCategoria({ ...newCategory, slug });
-            if (success) {
-                setNewCategory({ nome: '', cor: '#3E594D', icone: 'Store', ordem: 0 });
-                loadCategories();
-                onUpdate();
-            }
-        } catch (err: any) {
-            alert(`Falha ao criar categoria: ${err.message || 'Erro desconhecido'}`);
-        }
-    };
-    
-    const handleDelete = async (id: string) => {
-        if (window.confirm('Tem certeza? Excluir uma categoria é irreversível e só é permitido se nenhum anunciante a estiver usando.')) {
-            const success = await deleteCategoria(id);
-            if(success) {
-                loadCategories();
-                onUpdate();
-            }
-        }
-    };
-
-    return (
-        <div className="space-y-4">
-            <h4 className="text-lg font-bold text-gray-800">Gerenciar Categorias</h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                {loading && <p>Carregando...</p>}
-                {categories.map(cat => (
-                    <div key={cat.id} className="flex items-center justify-between bg-gray-100 p-2 rounded-md">
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full" style={{backgroundColor: cat.cor}}></div>
-                            {cat.nome === 'Morador' ? (
-                                <Icon name="User" size={16} style={{color: cat.cor}} />
-                            ) : (
-                                <Icon name={cat.icone as any} size={16} style={{color: cat.cor}} />
-                            )}
-                            <span className="font-medium">{cat.nome}</span>
-                        </div>
-                        <button type="button" onClick={() => handleDelete(cat.id)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={16} /></button>
-                    </div>
-                ))}
-            </div>
-            <form onSubmit={handleCreate} className="border-t pt-4 space-y-3">
-                <h5 className="font-semibold">Nova Categoria</h5>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input type="text" placeholder="Nome" value={newCategory.nome} onChange={e => setNewCategory({...newCategory, nome: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-md" required />
-                    <input type="text" placeholder="Ícone (Lucide)" value={newCategory.icone} onChange={e => setNewCategory({...newCategory, icone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-md" required />
-                    <input type="color" value={newCategory.cor} onChange={e => setNewCategory({...newCategory, cor: e.target.value})} className="w-full h-10 border border-gray-300 rounded-md p-1" />
-                </div>
-                <button type="submit" className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 flex items-center justify-center gap-2">
-                    <PlusCircle size={18} /> Adicionar
-                </button>
-            </form>
-            <div className="flex justify-end pt-4">
-                <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">Fechar</button>
-            </div>
-        </div>
-    );
-};
-
 const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, onCancel }) => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Anunciante>>({});
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [coupons, setCoupons] = useState<Partial<Cupom>[]>([]);
-  const [newCoupon, setNewCoupon] = useState({ titulo: '', codigo: '', descricao: '', data_validade: '' });
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const loadCategorias = useCallback(async () => {
-      const cats = await getCategorias();
-      setCategorias(cats);
-      return cats;
+    const cats = await getCategorias();
+    setCategorias(cats);
+    return cats;
   }, []);
-  
+
   useEffect(() => {
     loadCategorias();
   }, [loadCategorias]);
 
   useEffect(() => {
-    const defaultData: Partial<Anunciante> = {
+    const initializeForm = async () => {
+      const availableCategories = categorias.length > 0 ? categorias : await loadCategorias();
+      const defaultData: Partial<Anunciante> = {
         nome_empresa: '',
         descricao: '',
         descricao_curta: '',
         plano: 'bronze',
         valor_mensal: 200,
-        categoria_id: categorias.length > 0 ? categorias[0].id : '',
-        endereco: '',
-        cep: '',
-        telefone: '',
+        categoria_id: availableCategories.length > 0 ? availableCategories[0].id : '',
         whatsapp: '',
-        email: '',
-        site_url: '',
-        instagram: '',
-        facebook: '',
         ativo: true,
         destaque: false,
+        renovacao_automatica: true,
         contrato_inicio: new Date().toISOString().split('T')[0],
         contrato_duracao: 12,
         dia_vencimento: 5,
-        renovacao_automatica: false,
         comissao_gestor: 50,
         ordem_exibicao: 99,
-        notas_internas: '',
+      };
+
+      if (anunciante) {
+        setFormData(anunciante);
+        if (anunciante.logo_url) setLogoPreview(anunciante.logo_url);
+        if (anunciante.banner_url) setBannerPreview(anunciante.banner_url);
+      } else {
+        setFormData(defaultData);
+        setLogoPreview(null);
+        setBannerPreview(null);
+      }
     };
-    
-    const dataToSet = anunciante ? { ...anunciante } : defaultData;
-    if (!anunciante && categorias.length > 0 && !dataToSet.categoria_id) {
-        dataToSet.categoria_id = categorias[0].id;
-    }
-
-    setFormData(dataToSet);
-    setCoupons(anunciante?.cupons_desconto || []);
-    setLogoFile(null);
-    setBannerFile(null);
-
-  }, [anunciante, categorias]);
-
-  const getDisplayPlano = (plano: Anunciante['plano'], valor: number): Anunciante['plano'] | 'morador' => {
-    if (valor === 0) {
-        return 'morador';
-    }
-    return plano;
+    initializeForm();
+  }, [anunciante, categorias, loadCategorias]);
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const isCheckbox = type === 'checkbox';
+    const inputValue = isCheckbox ? (e.target as HTMLInputElement).checked : (type.includes('number') ? parseFloat(value) || 0 : value);
+    setFormData(prev => ({ ...prev, [name]: inputValue }));
   };
-
-  const displayPlano = getDisplayPlano(formData.plano || 'bronze', formData.valor_mensal ?? 200);
 
   const handlePlanoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selected = e.target.value as Anunciante['plano'] | 'morador';
-    
+    const prices: Record<Anunciante['plano'], number> = { bronze: 200, prata: 300, ouro: 400 };
     if (selected === 'morador') {
         setFormData(prev => ({...prev, plano: 'bronze', valor_mensal: 0}));
     } else {
-        const prices: Record<Anunciante['plano'], number> = { bronze: 200, prata: 300, ouro: 400 };
         setFormData(prev => ({...prev, plano: selected, valor_mensal: prices[selected]}));
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const isCheckbox = type === 'checkbox';
-    const inputValue = isCheckbox ? (e.target as HTMLInputElement).checked : (type === 'number' ? parseFloat(value) || 0 : value);
-    setFormData({ ...formData, [name]: inputValue });
-  };
-  
-  const handleAddCoupon = () => {
-    if (newCoupon.titulo && newCoupon.codigo && newCoupon.descricao && newCoupon.data_validade) {
-        setCoupons([...coupons, { ...newCoupon }]);
-        setNewCoupon({ titulo: '', codigo: '', descricao: '', data_validade: '' });
-    } else {
-        alert('Por favor, preencha todos os campos do cupom, incluindo a data de validade.');
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'logo' | 'banner') => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      if (fileType === 'logo') {
+        setLogoFile(file);
+        setLogoPreview(previewUrl);
+      } else {
+        setBannerFile(file);
+        setBannerPreview(previewUrl);
+      }
     }
   };
 
-  const handleRemoveCoupon = (indexToRemove: number) => {
-    setCoupons(coupons.filter((_, index) => index !== indexToRemove));
-  };
-  
-  const handleCategoriesUpdate = async () => {
-    const updatedCats = await loadCategorias();
-    // If the currently selected category was deleted, reset selection
-    if (formData.categoria_id && !updatedCats.find(c => c.id === formData.categoria_id)) {
-        setFormData(prev => ({ ...prev, categoria_id: updatedCats.length > 0 ? updatedCats[0].id : '' }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.categoria_id) {
-        alert('Por favor, selecione uma categoria.');
+  const handleSubmit = async () => {
+    if (!formData.nome_empresa || !formData.categoria_id) {
+        alert('Por favor, preencha o Nome da Empresa e a Categoria antes de salvar.');
+        setCurrentStep(1);
         return;
     }
     setIsSubmitting(true);
-    
-    const { id, categorias_anunciantes, cupons_desconto, ...submitData} = formData;
+    const { id, categorias_anunciantes, cupons_desconto, ...submitData } = formData;
 
     try {
-      let savedAnunciante: Anunciante | null;
-      if (anunciante) {
-        savedAnunciante = await updateAnunciante(anunciante.id, submitData, logoFile || undefined, bannerFile || undefined);
-      } else {
-        savedAnunciante = await createAnunciante(submitData as any, logoFile || undefined, bannerFile || undefined);
-      }
-      
-      if (savedAnunciante) {
-        const originalCoupons = anunciante?.cupons_desconto || [];
-        const couponPromises = [];
+        const savedAnunciante = anunciante
+            ? await updateAnunciante(anunciante.id, submitData, logoFile || undefined, bannerFile || undefined)
+            : await createAnunciante(submitData as any, logoFile || undefined, bannerFile || undefined);
 
-        for (const original of originalCoupons) {
-            if (!coupons.find(c => c.id === original.id)) {
-                couponPromises.push(deleteCupom(original.id));
-            }
+        if (savedAnunciante) {
+            alert(`Anunciante ${anunciante ? 'atualizado' : 'criado'} com sucesso!`);
+            onSuccess();
+        } else {
+            throw new Error('Falha ao salvar o anunciante.');
         }
-        for (const newC of coupons) {
-            if (!newC.id) {
-                couponPromises.push(createCupom({
-                    titulo: newC.titulo!,
-                    codigo: newC.codigo!,
-                    descricao: newC.descricao!,
-                    anunciante_id: savedAnunciante.id,
-                    data_validade: newC.data_validade!,
-                }));
-            }
-        }
-        
-        await Promise.all(couponPromises);
-        alert(`Anunciante ${anunciante ? 'atualizado' : 'criado'} com sucesso!`);
-        onSuccess();
-
-      } else {
-          throw new Error('Falha ao salvar o anunciante.');
-      }
     } catch (error) {
-      alert('Ocorreu um erro ao salvar o anunciante.');
-      console.error(error);
+        alert('Ocorreu um erro ao salvar o anunciante.');
+        console.error(error);
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
   };
 
+  const steps = [
+    { id: 1, title: 'Informações', icon: '📋' },
+    { id: 2, title: 'Contato', icon: '📞' },
+    { id: 3, title: 'Plano & Valores', icon: '💰' },
+    { id: 4, title: 'Mídia', icon: '🎨' }
+  ];
+
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, steps.length));
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+  const displayPlano = (formData.valor_mensal ?? 0) === 0 ? 'morador' : formData.plano;
+
   return (
-    <>
-      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-        {/* Informações Principais */}
-        <div>
-          <h3 className="text-md font-semibold text-gray-800 mb-2">Informações Principais</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="nome_empresa" className="block font-medium text-gray-700">Nome da Empresa</label>
-              <input type="text" name="nome_empresa" id="nome_empresa" value={formData.nome_empresa || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
-            </div>
-            <div>
-                <label htmlFor="categoria_id" className="flex items-center gap-2 font-medium text-gray-700">
-                    Categoria
-                    <button type="button" onClick={() => setIsCategoryModalOpen(true)} className="text-xs text-blue-600 hover:underline">(Gerenciar)</button>
-                </label>
-                <select name="categoria_id" id="categoria_id" value={formData.categoria_id || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required>
-                    <option value="" disabled>Selecione...</option>
-                    {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
-                </select>
-            </div>
-          </div>
-          <div className="mt-4">
-            <label htmlFor="descricao_curta" className="block font-medium text-gray-700">Descrição Curta (para os cards)</label>
-            <input type="text" name="descricao_curta" id="descricao_curta" value={formData.descricao_curta || ''} onChange={handleInputChange} maxLength={100} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
-          </div>
-          <div className="mt-4">
-            <label htmlFor="descricao" className="block font-medium text-gray-700">Descrição Completa</label>
-            <textarea name="descricao" id="descricao" rows={3} value={formData.descricao || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen"></textarea>
-          </div>
-        </div>
-
-        {/* Informações de Contato */}
-        <FormSection title="Informações de Contato">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="telefone" className="block font-medium text-gray-700">Telefone</label>
-                <input type="tel" name="telefone" id="telefone" value={formData.telefone || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
-              </div>
-              <div>
-                <label htmlFor="whatsapp" className="block font-medium text-gray-700">WhatsApp</label>
-                <input type="tel" name="whatsapp" id="whatsapp" value={formData.whatsapp || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" placeholder="Ex: 5511999998888" />
-              </div>
-               <div>
-                <label htmlFor="email" className="block font-medium text-gray-700">E-mail</label>
-                <input type="email" name="email" id="email" value={formData.email || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
-              </div>
-              <div>
-                <label htmlFor="site_url" className="block font-medium text-gray-700">Website</label>
-                <input type="url" name="site_url" id="site_url" value={formData.site_url || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" placeholder="https://..." />
-              </div>
-              <div>
-                <label htmlFor="instagram" className="block font-medium text-gray-700">Instagram</label>
-                <input type="text" name="instagram" id="instagram" value={formData.instagram || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" placeholder="usuario_sem_@" />
-              </div>
-              <div>
-                <label htmlFor="facebook" className="block font-medium text-gray-700">Facebook</label>
-                <input type="text" name="facebook" id="facebook" value={formData.facebook || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" placeholder="usuario_facebook" />
-              </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            <div className="md:col-span-2">
-              <label htmlFor="endereco" className="block font-medium text-gray-700">Endereço</label>
-              <input type="text" name="endereco" id="endereco" value={formData.endereco || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
-            </div>
-            <div>
-              <label htmlFor="cep" className="block font-medium text-gray-700">CEP</label>
-              <input type="text" name="cep" id="cep" value={formData.cep || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
-            </div>
-          </div>
-        </FormSection>
-
-        {/* Plano, Financeiro e Contrato */}
-        <FormSection title="Plano, Financeiro e Contrato">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label htmlFor="plano" className="block font-medium text-gray-700">Plano</label>
-                <select name="plano" id="plano" value={displayPlano} onChange={handlePlanoChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen">
-                  <option value="morador">Morador</option>
-                  <option value="bronze">Bronze</option>
-                  <option value="prata">Prata</option>
-                  <option value="ouro">Ouro</option>
-                </select>
-              </div>
-               <div>
-                <label htmlFor="valor_mensal" className="block font-medium text-gray-700">Valor (R$)</label>
-                <input type="number" name="valor_mensal" id="valor_mensal" value={formData.valor_mensal || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen disabled:bg-gray-200" required disabled={displayPlano === 'morador'} />
-              </div>
-               <div>
-                <label htmlFor="comissao_gestor" className="block font-medium text-gray-700">Comissão Gestor (%)</label>
-                <input type="number" name="comissao_gestor" id="comissao_gestor" min="0" max="100" value={formData.comissao_gestor || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
-              </div>
-              <div>
-                <label htmlFor="dia_vencimento" className="block font-medium text-gray-700">Dia Venc.</label>
-                <input type="number" name="dia_vencimento" id="dia_vencimento" min="1" max="31" value={formData.dia_vencimento || 1} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" required />
-              </div>
-              <div>
-                <label htmlFor="contrato_inicio" className="block font-medium text-gray-700">Início Contrato</label>
-                <input type="date" name="contrato_inicio" id="contrato_inicio" value={formData.contrato_inicio || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
-              </div>
-              <div>
-                <label htmlFor="contrato_duracao" className="block font-medium text-gray-700">Duração (meses)</label>
-                <input type="number" name="contrato_duracao" id="contrato_duracao" value={formData.contrato_duracao || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brandGreen focus:border-brandGreen" />
-              </div>
-              <div className="flex items-end pb-2">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" name="renovacao_automatica" checked={formData.renovacao_automatica || false} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
-                  <span className="font-medium text-gray-700">Renov. Automática</span>
-                </label>
-              </div>
-            </div>
-        </FormSection>
-        
-        {/* Mídia e Visibilidade */}
-        <FormSection title="Mídia e Visibilidade">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label htmlFor="logoFile" className="block font-medium text-gray-700">Logo</label>
-                  <input type="file" name="logoFile" id="logoFile" accept="image/*" onChange={e => setLogoFile(e.target.files?.[0] || null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
-              </div>
-              <div>
-                  <label htmlFor="bannerFile" className="block font-medium text-gray-700">Banner</label>
-                  <input type="file" name="bannerFile" id="bannerFile" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brandGreen-light file:text-brandGreen-dark hover:file:bg-brandGreen" />
-              </div>
-          </div>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div className="flex items-end pb-2">
-                  <label className="flex items-center gap-2">
-                      <input type="checkbox" name="ativo" checked={formData.ativo ?? true} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
-                      <span className="font-medium text-gray-700">Anunciante Ativo</span>
-                  </label>
-              </div>
-               <div className="flex items-end pb-2">
-                  <label className="flex items-center gap-2">
-                      <input type="checkbox" name="destaque" checked={formData.destaque || false} onChange={handleInputChange} className="h-4 w-4 rounded border-gray-300 text-brandGreen focus:ring-brandGreen" />
-                      <span className="font-medium text-gray-700">Anunciante Destaque</span>
-                  </label>
-              </div>
-              <div>
-                  <label htmlFor="ordem_exibicao" className="block font-medium text-gray-700">Ordem de Exibição</label>
-                  <input type="number" name="ordem_exibicao" id="ordem_exibicao" value={formData.ordem_exibicao || 0} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Menor = Mais alto" />
-              </div>
-          </div>
-        </FormSection>
-
-        {/* Notas Internas */}
-        <FormSection title="Administrativo">
-          <div>
-            <label htmlFor="notas_internas" className="block font-medium text-gray-700">Notas Internas (visível apenas para admin)</label>
-            <textarea name="notas_internas" id="notas_internas" rows={3} value={formData.notas_internas || ''} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
-          </div>
-        </FormSection>
-
-        {/* Cupons de Desconto */}
-        <FormSection title="Cupons de Desconto">
-            <div className="space-y-2">
-                {coupons.length > 0 && coupons.map((cupom, index) => (
-                    <div key={cupom.id || `new-${index}`} className="flex items-start justify-between bg-gray-100 p-3 rounded-md">
-                        <div>
-                            <p className="font-semibold text-gray-800">{cupom.titulo}</p>
-                            <p className="font-bold text-brandGreen">{cupom.codigo}</p>
-                            <p className="text-gray-600">{cupom.descricao}</p>
-                            {cupom.data_validade && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                  Válido até: {new Date(cupom.data_validade).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                              </p>
-                            )}
-                        </div>
-                        <button type="button" onClick={() => handleRemoveCoupon(index)} className="text-red-500 hover:text-red-700 p-1 flex-shrink-0">
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                ))}
-            </div>
-            <div className="mt-4 border-t pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                    <div>
-                        <label htmlFor="cupom-titulo" className="block font-medium text-gray-700">Título do Cupom</label>
-                        <input id="cupom-titulo" type="text" value={newCoupon.titulo} onChange={e => setNewCoupon(c => ({...c, titulo: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                    </div>
-                    <div>
-                        <label htmlFor="cupom-codigo" className="block font-medium text-gray-700">Código</label>
-                        <input id="cupom-codigo" type="text" value={newCoupon.codigo} onChange={e => setNewCoupon(c => ({...c, codigo: e.target.value.toUpperCase()}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                    </div>
-                    <div className="md:col-span-2">
-                        <label htmlFor="cupom-descricao" className="block font-medium text-gray-700">Descrição</label>
-                        <input id="cupom-descricao" type="text" value={newCoupon.descricao} onChange={e => setNewCoupon(c => ({...c, descricao: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                    </div>
-                    <div>
-                        <label htmlFor="cupom-validade" className="block font-medium text-gray-700">Data de Validade</label>
-                        <input id="cupom-validade" type="date" value={newCoupon.data_validade} onChange={e => setNewCoupon(c => ({...c, data_validade: e.target.value}))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                    </div>
-                </div>
-                <div className="flex justify-end">
-                    <button type="button" onClick={handleAddCoupon} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 h-10">
-                        Adicionar
-                    </button>
-                </div>
-            </div>
-        </FormSection>
-        
-        {/* Botões */}
-        <div className="pt-4 flex justify-end gap-3">
-          <button type="button" onClick={onCancel} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">
-            Cancelar
-          </button>
-          <button type="submit" disabled={isSubmitting} className="bg-brandGreen text-white px-4 py-2 rounded-md hover:bg-brandGreen-dark disabled:bg-gray-400">
-            {isSubmitting ? 'Salvando...' : 'Salvar'}
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg p-6 mb-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {anunciante ? 'Editar Anunciante' : 'Novo Anunciante'}
+          </h1>
+          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+            <X className="w-6 h-6" />
           </button>
         </div>
-      </form>
 
-      <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} title="Gerenciar Categorias">
-          <CategoryManager onClose={() => setIsCategoryModalOpen(false)} onUpdate={handleCategoriesUpdate} />
-      </Modal>
-    </>
+        <div className="flex items-center justify-between relative">
+          {steps.map((step, index) => (
+            <div key={step.id} className="flex-1 relative">
+              <div className="flex flex-col items-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-semibold transition-all ${currentStep === step.id ? 'bg-brandGreen text-white scale-110 shadow-lg' : currentStep > step.id ? 'bg-brandGreen-light text-brandGreen-dark' : 'bg-gray-100 text-gray-400'}`}>
+                  {currentStep > step.id ? <Check className="w-6 h-6" /> : step.icon}
+                </div>
+                <span className={`mt-2 text-xs font-medium ${currentStep === step.id ? 'text-brandGreen' : 'text-gray-500'}`}>{step.title}</span>
+              </div>
+              {index < steps.length - 1 && <div className={`absolute top-6 left-1/2 w-full h-0.5 -z-10 ${currentStep > step.id ? 'bg-brandGreen' : 'bg-gray-200'}`} />}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg p-6 mb-6">
+        {currentStep === 1 && (
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="nome_empresa" className="block text-sm font-medium text-gray-700 mb-2">Nome da Empresa *</label>
+                <input id="nome_empresa" name="nome_empresa" type="text" value={formData.nome_empresa || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="Ex: Pizzaria Bella Napoli" required />
+              </div>
+              <div>
+                <label htmlFor="categoria_id" className="block text-sm font-medium text-gray-700 mb-2">Categoria *</label>
+                <select id="categoria_id" name="categoria_id" value={formData.categoria_id || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" required>
+                  <option value="" disabled>Selecione...</option>
+                  {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="descricao_curta" className="block text-sm font-medium text-gray-700 mb-2">Descrição Curta (para os cards)<span className="text-gray-400 text-xs ml-2">Máx. 100 caracteres</span></label>
+                <input id="descricao_curta" name="descricao_curta" type="text" maxLength={100} value={formData.descricao_curta || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="Ex: Tudo para seu pet em um só lugar!" />
+                <p className="text-xs text-gray-500 mt-1">{(formData.descricao_curta || '').length}/100 caracteres</p>
+              </div>
+              <div>
+                <label htmlFor="descricao" className="block text-sm font-medium text-gray-700 mb-2">Descrição Completa *</label>
+                <textarea id="descricao" name="descricao" rows={6} value={formData.descricao || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="Descreva os principais produtos/serviços, diferenciais, etc." required />
+              </div>
+            </div>
+        )}
+        {currentStep === 2 && (
+             <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                  <input type="tel" name="telefone" value={formData.telefone || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="(41) 3333-4444" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">WhatsApp *</label>
+                  <input type="tel" name="whatsapp" value={formData.whatsapp || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="5541999887766" required/>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                <input type="email" name="email" value={formData.email || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="contato@empresa.com.br" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
+                  <div className="flex"><span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">@</span><input type="text" name="instagram" value={formData.instagram || ''} onChange={handleInputChange} className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="nome_usuario" /></div>
+                </div>
+                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
+                  <input type="text" name="facebook" value={formData.facebook || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="Nome da Página" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                <input type="url" name="site_url" value={formData.site_url || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="https://www.exemplo.com.br" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Endereço</label>
+                  <input type="text" name="endereco" value={formData.endereco || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="Rua, Número, Bairro" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">CEP</label>
+                  <input type="text" name="cep" value={formData.cep || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="82400-000" />
+                </div>
+              </div>
+            </div>
+        )}
+        {currentStep === 3 && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4"><p className="text-sm text-blue-800">💡 <strong>Dica:</strong> Planos mais altos têm maior destaque visual e mais funcionalidades.</p></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Plano *</label>
+                  <select value={displayPlano} onChange={handlePlanoChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent">
+                    <option value="morador">🏢 Morador (Grátis)</option>
+                    <option value="bronze">🥉 Bronze</option>
+                    <option value="prata">🥈 Prata</option>
+                    <option value="ouro">🥇 Ouro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Valor Mensal (R$) *</label>
+                  <input type="number" name="valor_mensal" value={formData.valor_mensal || 0} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent disabled:bg-gray-100" placeholder="150.00" disabled={displayPlano === 'morador'} />
+                </div>
+              </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-medium text-yellow-900 mb-2">Divisão de Receita</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-yellow-800 mb-1">Comissão Gestor (%)</label>
+                    <input type="number" name="comissao_gestor" value={formData.comissao_gestor || 0} onChange={handleInputChange} className="w-full px-4 py-2 border border-yellow-300 rounded-lg" min="0" max="100" />
+                    <p className="text-xs text-yellow-700 mt-1">Você: R$ {(((formData.valor_mensal || 0) * (formData.comissao_gestor || 0)) / 100).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-yellow-800 mb-1">Condomínio (%)</label>
+                    <input type="number" value={100 - (formData.comissao_gestor || 0)} disabled className="w-full px-4 py-2 border border-yellow-300 rounded-lg bg-yellow-100" />
+                    <p className="text-xs text-yellow-700 mt-1">Condomínio: R$ {(((formData.valor_mensal || 0) * (100 - (formData.comissao_gestor || 0))) / 100).toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Início Contrato</label>
+                  <input type="date" name="contrato_inicio" value={formData.contrato_inicio?.split('T')[0] || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Duração (meses)</label>
+                  <input type="number" name="contrato_duracao" value={formData.contrato_duracao || 12} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" min="1" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Dia Vencimento</label>
+                  <input type="number" name="dia_vencimento" value={formData.dia_vencimento || 5} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" min="1" max="28" />
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="renovacao_automatica" checked={formData.renovacao_automatica || false} onChange={handleInputChange} className="w-5 h-5 text-brandGreen rounded focus:ring-brandGreen" />
+                  <span className="text-sm font-medium text-gray-700">Renovação Automática</span>
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notas Internas (apenas você vê)</label>
+                <textarea rows={3} name="notas_internas" value={formData.notas_internas || ''} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="Anotações privadas sobre negociação, histórico, etc." />
+              </div>
+            </div>
+        )}
+        {currentStep === 4 && (
+            <div className="space-y-6">
+                <input type="file" ref={logoInputRef} hidden accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
+                <input type="file" ref={bannerInputRef} hidden accept="image/*" onChange={(e) => handleFileChange(e, 'banner')} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+                  <div onClick={() => logoInputRef.current?.click()} className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brandGreen transition-colors cursor-pointer aspect-square flex flex-col justify-center items-center">
+                    {logoPreview ? <img src={logoPreview} alt="Preview do Logo" className="max-h-full max-w-full object-contain rounded-md" /> : <> <div className="text-4xl mb-2">📷</div> <button type="button" className="px-4 py-2 bg-brandGreen text-white rounded-lg hover:bg-brandGreen-dark text-sm">Escolher Arquivo</button> <p className="text-xs text-gray-500 mt-2">PNG, JPG até 2MB</p> </>}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Banner</label>
+                  <div onClick={() => bannerInputRef.current?.click()} className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-brandGreen transition-colors cursor-pointer aspect-video flex flex-col justify-center items-center">
+                    {bannerPreview ? <img src={bannerPreview} alt="Preview do Banner" className="max-h-full max-w-full object-contain rounded-md" /> : <> <div className="text-4xl mb-2">🖼️</div> <button type="button" className="px-4 py-2 bg-brandGreen text-white rounded-lg hover:bg-brandGreen-dark text-sm">Escolher Arquivo</button> <p className="text-xs text-gray-500 mt-2">1200x400px recomendado</p> </>}
+                  </div>
+                </div>
+              </div>
+              <div className="border-t pt-6">
+                <h4 className="font-medium text-gray-900 mb-4">Configurações de Exibição</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer p-4 border-2 rounded-lg hover:border-brandGreen transition-colors">
+                    <input type="checkbox" name="ativo" checked={formData.ativo ?? true} onChange={handleInputChange} className="w-5 h-5 text-brandGreen rounded focus:ring-brandGreen" />
+                    <div><div className="font-medium text-gray-900">Anunciante Ativo</div><div className="text-xs text-gray-500">Visível no site</div></div>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer p-4 border-2 rounded-lg hover:border-brandGreen transition-colors">
+                    <input type="checkbox" name="destaque" checked={formData.destaque || false} onChange={handleInputChange} className="w-5 h-5 text-brandGreen rounded focus:ring-brandGreen" />
+                    <div><div className="font-medium text-gray-900">Destaque</div><div className="text-xs text-gray-500">Carrossel topo</div></div>
+                  </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Ordem Exibição</label>
+                    <input type="number" name="ordem_exibicao" value={formData.ordem_exibicao || 0} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent" placeholder="0" />
+                    <p className="text-xs text-gray-500 mt-1">Menor = primeiro</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4"><h4 className="font-medium text-green-900 mb-2">✅ Tudo pronto!</h4><p className="text-sm text-green-800">Revise as informações e clique em "Salvar" para adicionar o anunciante.</p></div>
+            </div>
+        )}
+      </div>
+
+      <div className="flex justify-between items-center bg-white rounded-lg p-4">
+        <button onClick={prevStep} disabled={currentStep === 1} className="flex items-center gap-2 px-6 py-3 text-gray-600 hover:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"><ChevronLeft className="w-5 h-5" /> Anterior</button>
+        <div className="text-sm text-gray-500">Passo {currentStep} de {steps.length}</div>
+        {currentStep < steps.length ? (
+          <button onClick={nextStep} className="flex items-center gap-2 px-6 py-3 bg-brandGreen text-white rounded-lg hover:bg-brandGreen-dark transition-colors">Próximo <ChevronRight className="w-5 h-5" /></button>
+        ) : (
+          <button onClick={handleSubmit} disabled={isSubmitting} className="px-8 py-3 bg-brandGreen text-white rounded-lg hover:bg-brandGreen-dark font-medium transition-colors disabled:bg-gray-400">{isSubmitting ? 'Salvando...' : 'Salvar Anunciante'}</button>
+        )}
+      </div>
+    </div>
   );
 };
 
