@@ -155,7 +155,7 @@ const ParceirosPage: React.FC = () => {
                     <p className="mt-2 text-lg text-gray-600">Apoie o comércio local e aproveite vantagens exclusivas.</p>
                 </div>
 
-                <div className="bg-white p-4 rounded-lg shadow-sm mb-8 sticky top-20 z-40 flex flex-col gap-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm mb-8 flex flex-col gap-4">
                     <div className="relative w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                         <input
