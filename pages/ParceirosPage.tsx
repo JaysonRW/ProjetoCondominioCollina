@@ -57,6 +57,12 @@ const AnuncianteCard: React.FC<AnuncianteCardProps> = ({ anunciante, onDetailsCl
                     >
                         Falar com o Morador
                     </a>
+                     <button 
+                        onClick={() => onDetailsClick(anunciante)} 
+                        className="w-full text-center text-sm text-gray-600 hover:text-black font-medium transition-colors mt-2"
+                    >
+                        Ver Detalhes
+                    </button>
                 </div>
             </div>
         );
