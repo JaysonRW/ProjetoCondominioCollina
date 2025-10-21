@@ -575,7 +575,7 @@ export const getAdminBanners = async (): Promise<Banner[]> => {
 
 export const createBanner = async (bannerData: Omit<Banner, 'id'>, imageFile: File): Promise<Banner | null> => {
     const filePath = `banners/${Date.now()}_${imageFile.name}`;
-    const url_imagem = await uploadFile(imageFile, 'imagens', filePath);
+    const url_imagem = await uploadFile(imageFile, 'banners', filePath);
     if (!url_imagem) return null;
 
     const { data, error } = await supabase
@@ -594,7 +594,7 @@ export const updateBanner = async (id: string, updates: Partial<Banner>, imageFi
     const finalUpdates = { ...updates };
     if (imageFile) {
         const filePath = `banners/${id}_${imageFile.name}`;
-        finalUpdates.url_imagem = await uploadFile(imageFile, 'imagens', filePath) || undefined;
+        finalUpdates.url_imagem = await uploadFile(imageFile, 'banners', filePath) || undefined;
     }
     const { data, error } = await supabase
         .from('banner')
@@ -610,7 +610,7 @@ export const updateBanner = async (id: string, updates: Partial<Banner>, imageFi
 };
 
 export const deleteBanner = async (id: string, imageUrl: string): Promise<boolean> => {
-    await deleteFile('imagens', imageUrl);
+    await deleteFile('banners', imageUrl);
     const { error } = await supabase.from('banner').delete().eq('id', id);
     if (error) {
         console.error('Error deleting banner:', error);
