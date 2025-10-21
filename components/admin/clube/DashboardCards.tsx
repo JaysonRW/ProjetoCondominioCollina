@@ -5,10 +5,12 @@ import Skeleton from '../../Skeleton';
 
 interface DashboardMetrics {
   receitaMensal: number;
+  receitaPotencialMensal: number;
   ganhoGestorMensal: number;
   ganhoCondominioMensal: number;
   totalAnunciantesAtivos: number;
-  pagamentosPendentes: number;
+  pagamentosPendentes: number; // Count
+  valorPendente: number; // Sum
   anunciantesPagantesEsteMes: number;
   receitaMediaPorAnunciante: number;
   crescimentoReceitaPercentual: number;
@@ -54,11 +56,18 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
             getFinanceiroClube(),
             getAdminAnunciantes()
         ]);
-
-        const pagamentosRecebidosEsteMes = financeiroData.filter(f => 
-            f.mes_referencia.startsWith(currentMonthStr) && f.status === 'pago'
+        
+        const pagamentosDoMesCorrente = financeiroData.filter(f => 
+            f.mes_referencia.startsWith(currentMonthStr)
         );
+
+        const pagamentosRecebidosEsteMes = pagamentosDoMesCorrente.filter(f => f.status === 'pago');
         const receitaMensal = pagamentosRecebidosEsteMes.reduce((acc, r) => acc + Number(r.valor_pago || 0), 0);
+        
+        const receitaPotencialMensal = pagamentosDoMesCorrente.reduce((acc, r) => acc + r.valor_contratado, 0);
+
+        const pagamentosPendentesDoMes = pagamentosDoMesCorrente.filter(f => f.status === 'pendente' || f.status === 'atrasado');
+        const valorPendente = pagamentosPendentesDoMes.reduce((acc, r) => acc + r.valor_contratado, 0);
         
         const receitaPagaMesAnterior = financeiroData
           .filter(f => f.mes_referencia.startsWith(prevMonthStr) && f.status === 'pago')
@@ -84,7 +93,7 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
 
         const anunciantesPagantesEsteMes = new Set(pagamentosRecebidosEsteMes.map(p => p.anunciante_id)).size;
         const receitaMediaPorAnunciante = anunciantesPagantesEsteMes > 0 ? receitaMensal / anunciantesPagantesEsteMes : 0;
-        const pagamentosPendentes = financeiroData.filter(f => f.status === 'pendente' || f.status === 'atrasado').length;
+        
         const totalAnunciantesAtivos = anunciantesData.filter(a => a.ativo).length;
 
         const totalVisualizacoes = anunciantesData.reduce((acc, a) => acc + (a.visualizacoes || 0), 0);
@@ -95,10 +104,12 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
 
         setMetrics({
           receitaMensal,
+          receitaPotencialMensal,
           ganhoGestorMensal,
           ganhoCondominioMensal,
           totalAnunciantesAtivos,
-          pagamentosPendentes,
+          pagamentosPendentes: pagamentosPendentesDoMes.length,
+          valorPendente,
           anunciantesPagantesEsteMes,
           receitaMediaPorAnunciante,
           crescimentoReceitaPercentual,
@@ -130,6 +141,24 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        {/* Receita Potencial (Mês) Card */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className="flex justify-between items-start mb-4">
+                <div className="bg-blue-100 p-3 rounded-lg">
+                    <DollarSign className="w-6 h-6 text-blue-600" />
+                </div>
+            </div>
+            <div>
+                <p className="text-sm font-medium text-gray-600">Receita Potencial (Mês)</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                    {`R$ ${metrics.receitaPotencialMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                    Soma de todos os contratos para o mês corrente.
+                </p>
+            </div>
+        </div>
+        
         {/* Receita Mensal Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
             <div className="flex justify-between items-start mb-4">
@@ -224,13 +253,22 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
             bgColor="bg-blue-100"
         />
 
-        <MetricCard
-            title="Pagamentos Pendentes"
-            value={metrics.pagamentosPendentes.toString()}
-            icon={AlertTriangle}
-            color="text-red-600"
-            bgColor="bg-red-100"
-        />
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className="flex justify-between items-start mb-4">
+                <div className="bg-red-100 p-3 rounded-lg">
+                    <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+            </div>
+            <div>
+                <p className="text-sm font-medium text-gray-600">Valor Pendente</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                    {`R$ ${metrics.valorPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                    {`em ${metrics.pagamentosPendentes} ${metrics.pagamentosPendentes === 1 ? 'fatura' : 'faturas'}`}
+                </p>
+            </div>
+        </div>
     </div>
   );
 }
