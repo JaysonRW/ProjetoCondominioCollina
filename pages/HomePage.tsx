@@ -151,7 +151,7 @@ const HomePage: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCur
       <section className="bg-gray-100 py-16">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-white p-8 rounded-lg shadow-xl">
-                <h2 className="text-3xl font-bold text-center text-brandGreen mb-8 font-display">Entre em Contato</h2>
+                <h2 className="text-3xl font-bold text-center text-brandGreen mb-8 font-display">Envie Sua Dúvida ou Sugestão</h2>
                 <form onSubmit={handleContactSubmit}>
                     <div className="mb-4">
                         <label htmlFor="nome" className="block text-gray-700 font-medium mb-1">Nome</label>
