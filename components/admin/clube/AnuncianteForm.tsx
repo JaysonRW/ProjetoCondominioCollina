@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Anunciante, Categoria } from '../../../types/types';
-import { getCategorias, createAnunciante, updateAnunciante } from '../../../services/api';
-import { Check, ChevronRight, ChevronLeft, UploadCloud, X } from 'lucide-react';
+import { Anunciante, Categoria, Cupom } from '../../../types/types';
+import { getCategorias, createAnunciante, updateAnunciante, createCupom, deleteCupom } from '../../../services/api';
+import { Check, ChevronRight, ChevronLeft, UploadCloud, X, Ticket, Plus, Trash2 } from 'lucide-react';
 
 interface AnuncianteFormProps {
   anunciante: Anunciante | null;
@@ -12,6 +12,7 @@ interface AnuncianteFormProps {
 const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, onCancel }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Anunciante>>({});
+  const [initialCoupons, setInitialCoupons] = useState<Cupom[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
@@ -19,6 +20,10 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   
+  const [newCupom, setNewCupom] = useState<Omit<Cupom, 'id' | 'anunciante_id'>>({
+      titulo: '', codigo: '', descricao: '', data_validade: ''
+  });
+
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,14 +56,18 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
         dia_vencimento: 5,
         comissao_gestor: 50,
         ordem_exibicao: 99,
+        cupons_desconto: [],
       };
 
       if (anunciante) {
-        setFormData(anunciante);
+        const formDataWithDefaults = { ...defaultData, ...anunciante };
+        setFormData(formDataWithDefaults);
+        setInitialCoupons(anunciante.cupons_desconto || []);
         if (anunciante.logo_url) setLogoPreview(anunciante.logo_url);
         if (anunciante.banner_url) setBannerPreview(anunciante.banner_url);
       } else {
         setFormData(defaultData);
+        setInitialCoupons([]);
         setLogoPreview(null);
         setBannerPreview(null);
       }
@@ -96,6 +105,25 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
       }
     }
   };
+  
+   const handleAddCupom = () => {
+    if (!newCupom.titulo || !newCupom.codigo) {
+      alert('Título e Código do cupom são obrigatórios.');
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      cupons_desconto: [...(prev.cupons_desconto || []), newCupom as Cupom]
+    }));
+    setNewCupom({ titulo: '', codigo: '', descricao: '', data_validade: '' });
+  };
+  
+  const handleRemoveCupom = (indexToRemove: number) => {
+    setFormData(prev => ({
+      ...prev,
+      cupons_desconto: (prev.cupons_desconto || []).filter((_, index) => index !== indexToRemove)
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!formData.nome_empresa || !formData.categoria_id) {
@@ -111,12 +139,26 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
             ? await updateAnunciante(anunciante.id, submitData, logoFile || undefined, bannerFile || undefined)
             : await createAnunciante(submitData as any, logoFile || undefined, bannerFile || undefined);
 
-        if (savedAnunciante) {
-            alert(`Anunciante ${anunciante ? 'atualizado' : 'criado'} com sucesso!`);
-            onSuccess();
-        } else {
-            throw new Error('Falha ao salvar o anunciante.');
+        if (!savedAnunciante) {
+             throw new Error('Falha ao salvar o anunciante principal.');
         }
+
+        // Sync coupons
+        const finalCoupons = cupons_desconto || [];
+        const initialCouponIds = new Set(initialCoupons.map(c => c.id));
+        const finalCouponIds = new Set(finalCoupons.filter(c => c.id).map(c => c.id));
+        
+        const couponsToDelete = initialCoupons.filter(c => !finalCouponIds.has(c.id));
+        const couponsToCreate = finalCoupons.filter(c => !c.id);
+
+        await Promise.all(couponsToDelete.map(c => deleteCupom(c.id)));
+        await Promise.all(couponsToCreate.map(c => createCupom({ 
+            ...c, 
+            anunciante_id: savedAnunciante.id 
+        } as Omit<Cupom, 'id'>)));
+
+        alert(`Anunciante ${anunciante ? 'atualizado' : 'criado'} com sucesso!`);
+        onSuccess();
     } catch (error) {
         alert('Ocorreu um erro ao salvar o anunciante.');
         console.error(error);
@@ -129,7 +171,8 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
     { id: 1, title: 'Informações', icon: '📋' },
     { id: 2, title: 'Contato', icon: '📞' },
     { id: 3, title: 'Plano & Valores', icon: '💰' },
-    { id: 4, title: 'Mídia', icon: '🎨' }
+    { id: 4, title: 'Cupons', icon: '🎟️' },
+    { id: 5, title: 'Mídia', icon: '🎨' }
   ];
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, steps.length));
@@ -163,7 +206,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
         </div>
       </div>
 
-      <div className="bg-white rounded-lg p-6 mb-6">
+      <div className="bg-white rounded-lg p-6 mb-6 min-h-[300px]">
         {currentStep === 1 && (
             <div className="space-y-6">
               <div>
@@ -245,7 +288,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Valor Mensal (R$) *</label>
-                  <input type="number" name="valor_mensal" value={formData.valor_mensal || 0} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent disabled:bg-gray-100" placeholder="150.00" disabled={displayPlano === 'morador'} />
+                  <input type="number" name="valor_mensal" value={formData.valor_mensal ?? 0} onChange={handleInputChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brandGreen focus:border-transparent disabled:bg-gray-100" placeholder="150.00" disabled={displayPlano === 'morador'} />
                 </div>
               </div>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -290,6 +333,50 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
             </div>
         )}
         {currentStep === 4 && (
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Gerenciar Cupons de Desconto</h3>
+                    {(formData.cupons_desconto || []).length > 0 && (
+                        <div className="space-y-2 mb-6">
+                            {(formData.cupons_desconto || []).map((cupom, index) => (
+                                <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border">
+                                    <div>
+                                        <p className="font-semibold text-gray-800">{cupom.titulo} <span className="font-mono text-sm bg-gray-200 text-gray-600 px-2 py-0.5 rounded ml-2">{cupom.codigo}</span></p>
+                                        <p className="text-sm text-gray-600">{cupom.descricao}</p>
+                                    </div>
+                                    <button type="button" onClick={() => handleRemoveCupom(index)} className="text-red-500 hover:text-red-700 p-1"><Trash2 size={18} /></button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                <div className="border-t pt-6">
+                    <h4 className="text-md font-medium text-gray-800 mb-2">Adicionar Novo Cupom</h4>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           <div>
+                             <label className="block text-sm font-medium text-gray-700">Título*</label>
+                             <input type="text" value={newCupom.titulo} onChange={(e) => setNewCupom({...newCupom, titulo: e.target.value})} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Ex: 10% OFF"/>
+                           </div>
+                           <div>
+                             <label className="block text-sm font-medium text-gray-700">Código*</label>
+                             <input type="text" value={newCupom.codigo} onChange={(e) => setNewCupom({...newCupom, codigo: e.target.value})} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Ex: BEMVINDO10"/>
+                           </div>
+                        </div>
+                        <div>
+                             <label className="block text-sm font-medium text-gray-700">Descrição</label>
+                             <input type="text" value={newCupom.descricao} onChange={(e) => setNewCupom({...newCupom, descricao: e.target.value})} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Ex: Válido na primeira compra"/>
+                        </div>
+                         <div>
+                            <label className="block text-sm font-medium text-gray-700">Data de Validade</label>
+                            <input type="date" value={newCupom.data_validade.split('T')[0]} onChange={(e) => setNewCupom({...newCupom, data_validade: e.target.value})} className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg"/>
+                        </div>
+                        <button type="button" onClick={handleAddCupom} className="bg-brandGreen text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-brandGreen-dark"><Plus size={16} />Adicionar Cupom</button>
+                    </div>
+                </div>
+            </div>
+        )}
+        {currentStep === 5 && (
             <div className="space-y-6">
                 <input type="file" ref={logoInputRef} hidden accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
                 <input type="file" ref={bannerInputRef} hidden accept="image/*" onChange={(e) => handleFileChange(e, 'banner')} />
