@@ -416,6 +416,25 @@ export const getFinanceiroClube = async (): Promise<FinanceiroClube[]> => {
     return data || [];
 };
 
+export const marcarPagamentoComoRecebido = async (financeiroId: string, valorContratado: number): Promise<FinanceiroClube | null> => {
+  const { data, error } = await supabase
+    .from('financeiro_clube')
+    .update({
+      status: 'pago',
+      data_pagamento: new Date().toISOString(),
+      valor_pago: valorContratado
+    })
+    .eq('id', financeiroId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error marking payment as received:', error);
+    return null;
+  }
+  return data;
+};
+
 export const syncCurrentMonthFinancialRecord = async (anunciante: Anunciante) => {
   const today = new Date();
   const mesReferencia = `${today.toISOString().slice(0, 7)}-01`;

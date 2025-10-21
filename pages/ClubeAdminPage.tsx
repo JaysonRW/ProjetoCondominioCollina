@@ -4,6 +4,7 @@ import DashboardClube from '../components/admin/clube/DashboardClube';
 import AnunciantesClube from '../components/admin/clube/AnunciantesClube';
 import Modal from '../components/Modal';
 import AnuncianteForm from '../components/admin/clube/AnuncianteForm';
+import PagamentosManager from '../components/admin/clube/PagamentosManager';
 import { Anunciante } from '../types/types';
 
 interface ClubeAdminPageProps {
@@ -12,27 +13,34 @@ interface ClubeAdminPageProps {
 
 const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAnuncianteModalOpen, setIsAnuncianteModalOpen] = useState(false);
+  const [isPagamentoModalOpen, setIsPagamentoModalOpen] = useState(false);
   const [editingAnunciante, setEditingAnunciante] = useState<Anunciante | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleOpenCreateModal = () => {
     setEditingAnunciante(null);
-    setIsModalOpen(true);
+    setIsAnuncianteModalOpen(true);
   };
 
   const handleOpenEditModal = (anunciante: Anunciante) => {
     setEditingAnunciante(anunciante);
-    setIsModalOpen(true);
+    setIsAnuncianteModalOpen(true);
   };
 
-  const handleModalSuccess = () => {
-    setIsModalOpen(false);
-    setRefreshKey(prev => prev + 1); // Trigger a refresh in the advertisers list
+  const handleAnuncianteModalSuccess = () => {
+    setIsAnuncianteModalOpen(false);
+    setRefreshKey(prev => prev + 1);
+  };
+
+  const handlePagamentoModalSuccess = () => {
+    // We don't close the modal automatically, to allow multiple registrations
+    setRefreshKey(prev => prev + 1);
   };
   
   const handleModalClose = () => {
-      setIsModalOpen(false);
+      setIsAnuncianteModalOpen(false);
+      setIsPagamentoModalOpen(false);
   };
 
   const TabButton: React.FC<{tabName: string; icon: React.ReactNode; children: React.ReactNode}> = ({tabName, icon, children}) => (
@@ -45,9 +53,17 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
   const renderContent = () => {
     switch(activeTab) {
         case 'dashboard':
-            return <DashboardClube onNewAnuncianteClick={handleOpenCreateModal} refreshKey={refreshKey} />;
+            return <DashboardClube 
+                      onNewAnuncianteClick={handleOpenCreateModal} 
+                      onRegisterPaymentClick={() => setIsPagamentoModalOpen(true)}
+                      refreshKey={refreshKey} 
+                   />;
         case 'anunciantes':
-            return <AnunciantesClube refreshKey={refreshKey} onEditAnunciante={handleOpenEditModal} onCreateAnunciante={handleOpenCreateModal} />;
+            return <AnunciantesClube 
+                      refreshKey={refreshKey} 
+                      onEditAnunciante={handleOpenEditModal} 
+                      onCreateAnunciante={handleOpenCreateModal} 
+                   />;
         default:
             return null;
     }
@@ -83,14 +99,24 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
       </div>
       
       <Modal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
+        isOpen={isAnuncianteModalOpen}
+        onClose={() => setIsAnuncianteModalOpen(false)}
         title={editingAnunciante ? 'Editar Anunciante' : 'Novo Anunciante'}
       >
         <AnuncianteForm 
             anunciante={editingAnunciante} 
-            onSuccess={handleModalSuccess}
-            onCancel={handleModalClose}
+            onSuccess={handleAnuncianteModalSuccess}
+            onCancel={() => setIsAnuncianteModalOpen(false)}
+        />
+      </Modal>
+
+       <Modal
+        isOpen={isPagamentoModalOpen}
+        onClose={() => setIsPagamentoModalOpen(false)}
+        title="Registrar Pagamentos"
+      >
+        <PagamentosManager 
+            onSuccess={handlePagamentoModalSuccess}
         />
       </Modal>
     </div>

@@ -9,7 +9,7 @@ interface DashboardMetrics {
   ganhoCondominioMensal: number;
   totalAnunciantesAtivos: number;
   pagamentosPendentes: number;
-  anunciantesFaturadosEsteMes: number;
+  anunciantesPagantesEsteMes: number;
   receitaMediaPorAnunciante: number;
   crescimentoReceitaPercentual: number;
   crescimentoGanhoPercentual: number;
@@ -55,22 +55,22 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
             getAdminAnunciantes()
         ]);
 
-        const faturamentosEsteMes = financeiroData.filter(f => 
-            f.mes_referencia.startsWith(currentMonthStr) && f.status !== 'cancelado'
+        const pagamentosRecebidosEsteMes = financeiroData.filter(f => 
+            f.mes_referencia.startsWith(currentMonthStr) && f.status === 'pago'
         );
-        const receitaMensal = faturamentosEsteMes.reduce((acc, r) => acc + Number(r.valor_contratado || 0), 0);
+        const receitaMensal = pagamentosRecebidosEsteMes.reduce((acc, r) => acc + Number(r.valor_pago || 0), 0);
         
-        const faturamentosMesAnterior = financeiroData
-          .filter(f => f.mes_referencia.startsWith(prevMonthStr) && f.status !== 'cancelado')
-          .reduce((acc, r) => acc + Number(r.valor_contratado || 0), 0);
+        const receitaPagaMesAnterior = financeiroData
+          .filter(f => f.mes_referencia.startsWith(prevMonthStr) && f.status === 'pago')
+          .reduce((acc, r) => acc + Number(r.valor_pago || 0), 0);
         
         const ganhoGestorMensal = receitaMensal * 0.6; // 60% para o gestor
         const ganhoCondominioMensal = receitaMensal - ganhoGestorMensal; // 40% para o condomínio
-        const ganhoGestorMesAnterior = faturamentosMesAnterior * 0.6;
+        const ganhoGestorMesAnterior = receitaPagaMesAnterior * 0.6;
         
         let crescimentoReceitaPercentual = 0;
-        if (faturamentosMesAnterior > 0) {
-            crescimentoReceitaPercentual = ((receitaMensal - faturamentosMesAnterior) / faturamentosMesAnterior) * 100;
+        if (receitaPagaMesAnterior > 0) {
+            crescimentoReceitaPercentual = ((receitaMensal - receitaPagaMesAnterior) / receitaPagaMesAnterior) * 100;
         } else if (receitaMensal > 0) {
             crescimentoReceitaPercentual = 100;
         }
@@ -82,8 +82,8 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
             crescimentoGanhoPercentual = 100;
         }
 
-        const anunciantesFaturadosEsteMes = new Set(faturamentosEsteMes.map(p => p.anunciante_id)).size;
-        const receitaMediaPorAnunciante = anunciantesFaturadosEsteMes > 0 ? receitaMensal / anunciantesFaturadosEsteMes : 0;
+        const anunciantesPagantesEsteMes = new Set(pagamentosRecebidosEsteMes.map(p => p.anunciante_id)).size;
+        const receitaMediaPorAnunciante = anunciantesPagantesEsteMes > 0 ? receitaMensal / anunciantesPagantesEsteMes : 0;
         const pagamentosPendentes = financeiroData.filter(f => f.status === 'pendente' || f.status === 'atrasado').length;
         const totalAnunciantesAtivos = anunciantesData.filter(a => a.ativo).length;
 
@@ -99,7 +99,7 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
           ganhoCondominioMensal,
           totalAnunciantesAtivos,
           pagamentosPendentes,
-          anunciantesFaturadosEsteMes,
+          anunciantesPagantesEsteMes,
           receitaMediaPorAnunciante,
           crescimentoReceitaPercentual,
           crescimentoGanhoPercentual,
@@ -144,13 +144,13 @@ const DashboardCards: React.FC<DashboardCardsProps> = ({ refreshKey }) => {
                 )}
             </div>
             <div>
-                <p className="text-sm font-medium text-gray-600">Receita Mensal</p>
+                <p className="text-sm font-medium text-gray-600">Receita Mensal (Paga)</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">
                     {`R$ ${metrics.receitaMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                 </p>
-                {metrics.anunciantesFaturadosEsteMes > 0 && (
+                {metrics.anunciantesPagantesEsteMes > 0 && (
                     <p className="text-xs text-gray-500 mt-2">
-                        {`${metrics.anunciantesFaturadosEsteMes} anunciantes × média R$ ${metrics.receitaMediaPorAnunciante.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                        {`${metrics.anunciantesPagantesEsteMes} anunciantes × média R$ ${metrics.receitaMediaPorAnunciante.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                     </p>
                 )}
             </div>
