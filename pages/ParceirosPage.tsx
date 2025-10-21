@@ -126,6 +126,8 @@ const ParceirosPage: React.FC = () => {
                 matchesCategory = true;
             } else if (selectedCategory === 'morador') {
                 matchesCategory = anunciante.valor_mensal === 0;
+            } else if (selectedCategory === 'has_coupons') {
+                matchesCategory = anunciante.cupons_desconto && anunciante.cupons_desconto.length > 0;
             } else {
                 matchesCategory = anunciante.categoria_id === selectedCategory;
             }
@@ -135,6 +137,7 @@ const ParceirosPage: React.FC = () => {
     }, [anunciantes, searchTerm, selectedCategory]);
 
     const hasMoradores = useMemo(() => anunciantes.some(a => a.valor_mensal === 0), [anunciantes]);
+    const hasCoupons = useMemo(() => anunciantes.some(a => a.cupons_desconto && a.cupons_desconto.length > 0), [anunciantes]);
     
     const handleDetailsClick = useCallback((anunciante: Anunciante) => {
         setSelectedAnunciante(anunciante);
@@ -190,6 +193,18 @@ const ParceirosPage: React.FC = () => {
                                 }`}
                             >
                                 <User size={14} className="transition-transform group-hover:scale-110"/> Morador
+                            </button>
+                        )}
+                        {hasCoupons && (
+                             <button
+                                onClick={() => setSelectedCategory('has_coupons')}
+                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 group ${
+                                    selectedCategory === 'has_coupons' 
+                                    ? 'bg-purple-600 text-white' 
+                                    : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+                                }`}
+                            >
+                                <Ticket size={14} className="transition-transform group-hover:scale-110"/> Tem Cupons
                             </button>
                         )}
                         {categorias
