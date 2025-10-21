@@ -111,3 +111,16 @@ export interface FinanceiroClube {
   data_vencimento?: string;
   status: 'pendente' | 'pago' | 'atrasado' | 'cancelado';
 }
+
+export interface Banner {
+  id: string;
+  titulo?: string;
+  descricao?: string;
+  url_imagem: string;
+  link_destino?: string;
+  pagina: 'anunciantes' | 'home';
+  ordem?: number;
+  ativo: boolean;
+  data_inicio?: string;
+  data_fim?: string;
+}

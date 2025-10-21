@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Comunicado, Faq, Evento, Documento, GaleriaImagem, Anunciante, Categoria, FinanceiroClube, Cupom } from '../types/types';
+import { Comunicado, Faq, Evento, Documento, GaleriaImagem, Anunciante, Categoria, FinanceiroClube, Cupom, Banner } from '../types/types';
 
 // Helper for file uploads
 const uploadFile = async (file: File, bucket: string, path: string): Promise<string | null> => {
@@ -532,4 +532,89 @@ export const atualizarStatusPagamentosAtrasados = async (): Promise<{ success: b
   }
 
   return { success: true, count: count || 0 };
+};
+
+// Banners API
+
+export const getBanners = async (pagina: string): Promise<Banner[]> => {
+    const { data, error } = await supabase
+        .from('banner')
+        .select('*')
+        .eq('pagina', pagina)
+        .eq('ativo', true)
+        .order('ordem', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching banners:', error);
+        return [];
+    }
+    
+    // Filtrar por datas ativas
+    const now = new Date();
+    const activeBanners = (data || []).filter(banner => {
+      const inicio = banner.data_inicio ? new Date(banner.data_inicio) : null;
+      const fim = banner.data_fim ? new Date(banner.data_fim) : null;
+      
+      if (inicio && now < inicio) return false;
+      if (fim && now > fim) return false;
+      return true;
+    });
+
+    return activeBanners;
+};
+
+export const getAdminBanners = async (): Promise<Banner[]> => {
+    const { data, error } = await supabase
+        .from('banner')
+        .select('*')
+        .order('pagina')
+        .order('ordem');
+    if (error) console.error('Error fetching admin banners:', error);
+    return data || [];
+};
+
+export const createBanner = async (bannerData: Omit<Banner, 'id'>, imageFile: File): Promise<Banner | null> => {
+    const filePath = `banners/${Date.now()}_${imageFile.name}`;
+    const url_imagem = await uploadFile(imageFile, 'imagens', filePath);
+    if (!url_imagem) return null;
+
+    const { data, error } = await supabase
+        .from('banner')
+        .insert([{ ...bannerData, url_imagem }])
+        .select()
+        .single();
+    if (error) {
+        console.error('Error creating banner:', error);
+        return null;
+    }
+    return data;
+};
+
+export const updateBanner = async (id: string, updates: Partial<Banner>, imageFile?: File): Promise<Banner | null> => {
+    const finalUpdates = { ...updates };
+    if (imageFile) {
+        const filePath = `banners/${id}_${imageFile.name}`;
+        finalUpdates.url_imagem = await uploadFile(imageFile, 'imagens', filePath) || undefined;
+    }
+    const { data, error } = await supabase
+        .from('banner')
+        .update(finalUpdates)
+        .eq('id', id)
+        .select()
+        .single();
+    if (error) {
+        console.error('Error updating banner:', error);
+        return null;
+    }
+    return data;
+};
+
+export const deleteBanner = async (id: string, imageUrl: string): Promise<boolean> => {
+    await deleteFile('imagens', imageUrl);
+    const { error } = await supabase.from('banner').delete().eq('id', id);
+    if (error) {
+        console.error('Error deleting banner:', error);
+        return false;
+    }
+    return true;
 };

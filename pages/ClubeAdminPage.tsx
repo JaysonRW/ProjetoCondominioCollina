@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { LogOut, LayoutDashboard, Store } from 'lucide-react';
+import { LogOut, LayoutDashboard, Store, Image as ImageIcon } from 'lucide-react';
 import DashboardClube from '../components/admin/clube/DashboardClube';
 import AnunciantesClube from '../components/admin/clube/AnunciantesClube';
+import BannersClube from '../components/admin/clube/BannersClube';
 import Modal from '../components/Modal';
 import AnuncianteForm from '../components/admin/clube/AnuncianteForm';
 import PagamentosManager from '../components/admin/clube/PagamentosManager';
-import { Anunciante } from '../types/types';
+import BannerForm from '../components/admin/clube/BannerForm';
+import { Anunciante, Banner } from '../types/types';
 
 interface ClubeAdminPageProps {
   onLogout: () => void;
@@ -13,38 +15,50 @@ interface ClubeAdminPageProps {
 
 const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  
   const [isAnuncianteModalOpen, setIsAnuncianteModalOpen] = useState(false);
-  const [isPagamentoModalOpen, setIsPagamentoModalOpen] = useState(false);
   const [editingAnunciante, setEditingAnunciante] = useState<Anunciante | null>(null);
+
+  const [isPagamentoModalOpen, setIsPagamentoModalOpen] = useState(false);
+  
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+
   const [refreshKey, setRefreshKey] = useState(0);
 
   const triggerRefresh = useCallback(() => {
     setRefreshKey(prev => prev + 1);
   }, []);
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateAnuncianteModal = () => {
     setEditingAnunciante(null);
     setIsAnuncianteModalOpen(true);
   };
 
-  const handleOpenEditModal = (anunciante: Anunciante) => {
+  const handleOpenEditAnuncianteModal = (anunciante: Anunciante) => {
     setEditingAnunciante(anunciante);
     setIsAnuncianteModalOpen(true);
   };
-
-  const handleAnuncianteModalSuccess = () => {
-    setIsAnuncianteModalOpen(false);
-    triggerRefresh();
+  
+  const handleOpenCreateBannerModal = () => {
+    setEditingBanner(null);
+    setIsBannerModalOpen(true);
+  };
+  
+  const handleOpenEditBannerModal = (banner: Banner) => {
+    setEditingBanner(banner);
+    setIsBannerModalOpen(true);
   };
 
-  const handlePagamentoModalSuccess = () => {
-    // We don't close the modal automatically, to allow multiple registrations
+  const handleModalSuccess = () => {
+    setIsAnuncianteModalOpen(false);
+    setIsBannerModalOpen(false);
     triggerRefresh();
   };
   
-  const handleModalClose = () => {
-      setIsAnuncianteModalOpen(false);
-      setIsPagamentoModalOpen(false);
+  const handlePagamentoModalSuccess = () => {
+    // We don't close the modal automatically, to allow multiple registrations
+    triggerRefresh();
   };
 
   const TabButton: React.FC<{tabName: string; icon: React.ReactNode; children: React.ReactNode}> = ({tabName, icon, children}) => (
@@ -58,7 +72,7 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
     switch(activeTab) {
         case 'dashboard':
             return <DashboardClube 
-                      onNewAnuncianteClick={handleOpenCreateModal} 
+                      onNewAnuncianteClick={handleOpenCreateAnuncianteModal} 
                       onRegisterPaymentClick={() => setIsPagamentoModalOpen(true)}
                       refreshKey={refreshKey}
                       triggerRefresh={triggerRefresh} 
@@ -66,9 +80,15 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
         case 'anunciantes':
             return <AnunciantesClube 
                       refreshKey={refreshKey} 
-                      onEditAnunciante={handleOpenEditModal} 
-                      onCreateAnunciante={handleOpenCreateModal} 
+                      onEditAnunciante={handleOpenEditAnuncianteModal} 
+                      onCreateAnunciante={handleOpenCreateAnuncianteModal} 
                    />;
+        case 'banners':
+            return <BannersClube
+                      refreshKey={refreshKey}
+                      onEditBanner={handleOpenEditBannerModal}
+                      onCreateBanner={handleOpenCreateBannerModal}
+                    />
         default:
             return null;
     }
@@ -92,6 +112,7 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
                 <div className="bg-white p-4 rounded-lg shadow-sm space-y-2">
                    <TabButton tabName="dashboard" icon={<LayoutDashboard size={20} />}>Dashboard</TabButton>
                    <TabButton tabName="anunciantes" icon={<Store size={20} />}>Anunciantes</TabButton>
+                   <TabButton tabName="banners" icon={<ImageIcon size={20} />}>Banners</TabButton>
                 </div>
             </aside>
             
@@ -110,8 +131,20 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
       >
         <AnuncianteForm 
             anunciante={editingAnunciante} 
-            onSuccess={handleAnuncianteModalSuccess}
+            onSuccess={handleModalSuccess}
             onCancel={() => setIsAnuncianteModalOpen(false)}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isBannerModalOpen}
+        onClose={() => setIsBannerModalOpen(false)}
+        title={editingBanner ? 'Editar Banner' : 'Novo Banner'}
+      >
+        <BannerForm
+            banner={editingBanner}
+            onSuccess={handleModalSuccess}
+            onCancel={() => setIsBannerModalOpen(false)}
         />
       </Modal>
 

@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import Icon from '../components/Icon';
 import { AnuncianteCardSkeleton } from '../components/Skeleton';
 import { Search, MapPin, Phone, Mail, Globe, Instagram, Ticket, Star, ShieldCheck, Gem, Home, User } from 'lucide-react';
+import BannerCarousel from '../components/BannerCarousel';
 
 const PlanoBadge: React.FC<{ plano: Anunciante['plano'] }> = ({ plano }) => {
     const styles = {
@@ -166,6 +167,7 @@ const ParceirosPage: React.FC = () => {
     return (
         <div className="bg-gray-50 min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
+                <BannerCarousel pagina="anunciantes" />
                 <div className="text-center mb-12">
                     <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 font-display">Clube de Vantagens</h1>
                     <p className="mt-2 text-lg text-gray-600">Apoie o comércio local e aproveite vantagens exclusivas.</p>
