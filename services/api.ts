@@ -421,7 +421,7 @@ export const marcarPagamentoComoRecebido = async (financeiroId: string, valorCon
     .from('financeiro_clube')
     .update({
       status: 'pago',
-      data_pagamento: new Date().toISOString(),
+      data_pagamento: new Date().toISOString().split('T')[0], // FIX: Format to YYYY-MM-DD
       valor_pago: valorContratado
     })
     .eq('id', financeiroId)
