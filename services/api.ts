@@ -438,6 +438,11 @@ export const marcarPagamentoComoRecebido = async (financeiroId: string, valorCon
 export const syncCurrentMonthFinancialRecord = async (anunciante: Anunciante) => {
   const today = new Date();
   const mesReferencia = `${today.toISOString().slice(0, 7)}-01`;
+  const diaVencimento = anunciante.dia_vencimento || 5;
+  // Garante que o dia do vencimento não cause problemas em meses curtos
+  const safeDiaVencimento = Math.min(diaVencimento, 28);
+  const dataVencimento = new Date(today.getFullYear(), today.getMonth(), safeDiaVencimento).toISOString().split('T')[0];
+
 
   const { data: existingRecord } = await supabase
     .from('financeiro_clube')
@@ -455,12 +460,16 @@ export const syncCurrentMonthFinancialRecord = async (anunciante: Anunciante) =>
       mes_referencia: mesReferencia,
       valor_contratado: anunciante.valor_mensal,
       status: 'pendente' as const,
+      data_vencimento: dataVencimento,
     };
     
     if (existingRecord) {
       // Update only if it's not already paid
       if (existingRecord.status !== 'pago') {
-        await supabase.from('financeiro_clube').update({ valor_contratado: anunciante.valor_mensal }).eq('id', existingRecord.id);
+        await supabase.from('financeiro_clube').update({ 
+            valor_contratado: anunciante.valor_mensal,
+            data_vencimento: dataVencimento
+        }).eq('id', existingRecord.id);
       }
     } else {
       // Create a new pending record
@@ -473,4 +482,54 @@ export const syncCurrentMonthFinancialRecord = async (anunciante: Anunciante) =>
       await supabase.from('financeiro_clube').delete().eq('id', existingRecord.id);
     }
   }
+};
+
+
+/**
+ * Gera cobranças para TODOS os anunciantes ativos do mês atual
+ * Útil para rodar manualmente quando necessário
+ */
+export const gerarCobrancasMesAtual = async (): Promise<{ success: boolean, count: number }> => {
+  const { data: anunciantesAtivos, error } = await supabase
+    .from('anunciantes')
+    .select('*')
+    .eq('ativo', true);
+
+  if (error) {
+    console.error('Error fetching active advertisers:', error);
+    return { success: false, count: 0 };
+  }
+  
+  if (!anunciantesAtivos) {
+    return { success: true, count: 0 };
+  }
+
+  let count = 0;
+  for (const anunciante of anunciantesAtivos) {
+    await syncCurrentMonthFinancialRecord(anunciante);
+    count++;
+  }
+  
+  return { success: true, count };
+};
+
+
+/**
+ * Atualizar status de pagamentos para 'atrasado'
+ */
+export const atualizarStatusPagamentosAtrasados = async (): Promise<{ success: boolean, count: number }> => {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { error, count } = await supabase
+    .from('financeiro_clube')
+    .update({ status: 'atrasado' })
+    .eq('status', 'pendente')
+    .lt('data_vencimento', today);
+
+  if (error) {
+    console.error('Erro ao atualizar status de pagamentos atrasados:', error);
+    return { success: false, count: 0 };
+  }
+
+  return { success: true, count: count || 0 };
 };

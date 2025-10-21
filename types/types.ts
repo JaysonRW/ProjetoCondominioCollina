@@ -108,5 +108,6 @@ export interface FinanceiroClube {
   valor_contratado: number;
   valor_pago?: number;
   data_pagamento?: string;
+  data_vencimento?: string;
   status: 'pendente' | 'pago' | 'atrasado' | 'cancelado';
 }

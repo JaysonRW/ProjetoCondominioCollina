@@ -18,6 +18,10 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
   const [editingAnunciante, setEditingAnunciante] = useState<Anunciante | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const triggerRefresh = useCallback(() => {
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
   const handleOpenCreateModal = () => {
     setEditingAnunciante(null);
     setIsAnuncianteModalOpen(true);
@@ -30,12 +34,12 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
 
   const handleAnuncianteModalSuccess = () => {
     setIsAnuncianteModalOpen(false);
-    setRefreshKey(prev => prev + 1);
+    triggerRefresh();
   };
 
   const handlePagamentoModalSuccess = () => {
     // We don't close the modal automatically, to allow multiple registrations
-    setRefreshKey(prev => prev + 1);
+    triggerRefresh();
   };
   
   const handleModalClose = () => {
@@ -56,7 +60,8 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
             return <DashboardClube 
                       onNewAnuncianteClick={handleOpenCreateModal} 
                       onRegisterPaymentClick={() => setIsPagamentoModalOpen(true)}
-                      refreshKey={refreshKey} 
+                      refreshKey={refreshKey}
+                      triggerRefresh={triggerRefresh} 
                    />;
         case 'anunciantes':
             return <AnunciantesClube 
