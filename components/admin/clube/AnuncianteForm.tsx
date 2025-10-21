@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Anunciante, Categoria, Cupom } from '../../../types/types';
-import { getCategorias, createAnunciante, updateAnunciante, createCupom, deleteCupom } from '../../../services/api';
+import { getCategorias, createAnunciante, updateAnunciante, createCupom, deleteCupom, syncCurrentMonthFinancialRecord } from '../../../services/api';
 import { Check, ChevronRight, ChevronLeft, UploadCloud, X, Ticket, Plus, Trash2 } from 'lucide-react';
 
 interface AnuncianteFormProps {
@@ -54,7 +54,7 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
         contrato_inicio: new Date().toISOString().split('T')[0],
         contrato_duracao: 12,
         dia_vencimento: 5,
-        comissao_gestor: 50,
+        comissao_gestor: 60,
         ordem_exibicao: 99,
         cupons_desconto: [],
       };
@@ -156,6 +156,9 @@ const AnuncianteForm: React.FC<AnuncianteFormProps> = ({ anunciante, onSuccess, 
             ...c, 
             anunciante_id: savedAnunciante.id 
         } as Omit<Cupom, 'id'>)));
+        
+        // Sync financial record for the current month
+        await syncCurrentMonthFinancialRecord(savedAnunciante);
 
         alert(`Anunciante ${anunciante ? 'atualizado' : 'criado'} com sucesso!`);
         onSuccess();

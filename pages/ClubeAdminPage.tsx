@@ -45,7 +45,7 @@ const ClubeAdminPage: React.FC<ClubeAdminPageProps> = ({ onLogout }) => {
   const renderContent = () => {
     switch(activeTab) {
         case 'dashboard':
-            return <DashboardClube onNewAnuncianteClick={handleOpenCreateModal} />;
+            return <DashboardClube onNewAnuncianteClick={handleOpenCreateModal} refreshKey={refreshKey} />;
         case 'anunciantes':
             return <AnunciantesClube refreshKey={refreshKey} onEditAnunciante={handleOpenEditModal} onCreateAnunciante={handleOpenCreateModal} />;
         default:

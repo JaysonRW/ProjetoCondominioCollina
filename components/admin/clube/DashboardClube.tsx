@@ -6,9 +6,10 @@ import { PlusCircle } from 'lucide-react';
 
 interface DashboardClubeProps {
   onNewAnuncianteClick: () => void;
+  refreshKey: number;
 }
 
-const DashboardClube: React.FC<DashboardClubeProps> = ({ onNewAnuncianteClick }) => {
+const DashboardClube: React.FC<DashboardClubeProps> = ({ onNewAnuncianteClick, refreshKey }) => {
   const handleGenerateReport = () => {
     alert('A funcionalidade de gerar relatório mensal será implementada em breve.');
   };
@@ -17,15 +18,15 @@ const DashboardClube: React.FC<DashboardClubeProps> = ({ onNewAnuncianteClick })
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Dashboard</h2>
-        <DashboardCards />
+        <DashboardCards refreshKey={refreshKey} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-            <PerformanceAnunciantes />
+            <PerformanceAnunciantes refreshKey={refreshKey} />
         </div>
         <div className="lg:col-span-1">
-            <PagamentosPendentes />
+            <PagamentosPendentes refreshKey={refreshKey} />
         </div>
       </div>
       

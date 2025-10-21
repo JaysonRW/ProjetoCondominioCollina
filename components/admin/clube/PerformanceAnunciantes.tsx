@@ -4,7 +4,11 @@ import { Anunciante } from '../../../types/types';
 import Skeleton from '../../Skeleton';
 import { TrendingUp, Eye } from 'lucide-react';
 
-const PerformanceAnunciantes: React.FC = () => {
+interface PerformanceAnunciantesProps {
+  refreshKey: number;
+}
+
+const PerformanceAnunciantes: React.FC<PerformanceAnunciantesProps> = ({ refreshKey }) => {
   const [ranking, setRanking] = useState<Anunciante[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,7 +21,7 @@ const PerformanceAnunciantes: React.FC = () => {
         setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [refreshKey]);
 
   return (
     <div className="bg-white p-4 rounded-lg h-full border border-gray-200 shadow-sm">

@@ -3,7 +3,11 @@ import { getFinanceiroClube } from '../../../services/api';
 import { FinanceiroClube } from '../../../types/types';
 import Skeleton from '../../Skeleton';
 
-const PagamentosPendentes: React.FC = () => {
+interface PagamentosPendentesProps {
+  refreshKey: number;
+}
+
+const PagamentosPendentes: React.FC<PagamentosPendentesProps> = ({ refreshKey }) => {
   const [pendentes, setPendentes] = useState<FinanceiroClube[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,7 +20,7 @@ const PagamentosPendentes: React.FC = () => {
         setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [refreshKey]);
 
   return (
     <div className="bg-white p-4 rounded-lg h-full border border-gray-200 shadow-sm">

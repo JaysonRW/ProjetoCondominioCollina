@@ -368,6 +368,9 @@ export const updateAnunciante = async (id: string, updates: Partial<Anunciante>,
 };
 
 export const deleteAnunciante = async (id: string, logoUrl?: string, bannerUrl?: string): Promise<boolean> => {
+    // First, delete associated financial records to maintain data integrity
+    await supabase.from('financeiro_clube').delete().eq('anunciante_id', id);
+    
     if (logoUrl) await deleteFile('imagens_anunciantes', logoUrl);
     if (bannerUrl) await deleteFile('imagens_anunciantes', bannerUrl);
 
@@ -411,4 +414,44 @@ export const getFinanceiroClube = async (): Promise<FinanceiroClube[]> => {
         return [];
     }
     return data || [];
+};
+
+export const syncCurrentMonthFinancialRecord = async (anunciante: Anunciante) => {
+  const today = new Date();
+  const mesReferencia = `${today.toISOString().slice(0, 7)}-01`;
+
+  const { data: existingRecord } = await supabase
+    .from('financeiro_clube')
+    .select('id, status')
+    .eq('anunciante_id', anunciante.id)
+    .eq('mes_referencia', mesReferencia)
+    .maybeSingle();
+
+  const shouldHaveRecord = anunciante.ativo && anunciante.valor_mensal && anunciante.valor_mensal > 0;
+
+  if (shouldHaveRecord) {
+    // Announcer should have a financial record for this month
+    const recordData = {
+      anunciante_id: anunciante.id,
+      mes_referencia: mesReferencia,
+      valor_contratado: anunciante.valor_mensal,
+      status: 'pendente' as const,
+    };
+    
+    if (existingRecord) {
+      // Update only if it's not already paid
+      if (existingRecord.status !== 'pago') {
+        await supabase.from('financeiro_clube').update({ valor_contratado: anunciante.valor_mensal }).eq('id', existingRecord.id);
+      }
+    } else {
+      // Create a new pending record
+      await supabase.from('financeiro_clube').insert(recordData);
+    }
+  } else {
+    // Announcer is inactive or free, should NOT have a pending record
+    if (existingRecord && existingRecord.status !== 'pago') {
+      // If a pending/atrasado record exists, remove it
+      await supabase.from('financeiro_clube').delete().eq('id', existingRecord.id);
+    }
+  }
 };
